@@ -1307,8 +1307,12 @@ function backends.showFreshRSSNode(self, account, client, node, opts)
             local normal_callback = function()
                 backends.showFreshRSSNode(self, account, client, child)
             end
+            local folder_title = child.title or _("Untitled folder")
+            if (child.unreadCount or 0) > 0 then
+                folder_title = folder_title .. " (" .. tostring(child.unreadCount) .. ")"
+            end
             table.insert(entries, {
-                text = child.title or _("Untitled folder"),
+                text = folder_title,
                 callback = normal_callback,
                 hold_callback = function()
                     self:createLongPressMenuForFolder(account, client, child, normal_callback)

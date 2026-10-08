@@ -270,15 +270,31 @@ function FreshRSS:fetchStructure(force)
         return false, tags_data
     end
 
-    self.tree_cache = self:buildTreeFromData(subs_data, tags_data)
+    -- 3. Get unread counts per feed and per label (subscription/list has none).
+    -- Counts are optional: the tree still loads if this request fails.
+    local ok3, counts_data = self:authorizedRequest("GET", "/api/greader.php/reader/api/0/unread-count", { output = "json" })
+    if not ok3 then
+        logger.warn("FreshRSS unread-count request failed:", counts_data)
+        counts_data = nil
+    end
+
+    self.tree_cache = self:buildTreeFromData(subs_data, tags_data, counts_data)
     return true, self.tree_cache
 end
 
-function FreshRSS:buildTreeFromData(subs_data, tags_data)
+function FreshRSS:buildTreeFromData(subs_data, tags_data, counts_data)
     local feeds_map = {}
     local folders = {}
     local folders_map = {}
     local tag_labels = {}
+
+    -- Map stream id ("feed/..." or "user/-/label/...") to its unread count
+    local unread_by_id = {}
+    for _, entry in ipairs((counts_data and counts_data.unreadcounts) or {}) do
+        if type(entry) == "table" and entry.id ~= nil then
+            unread_by_id[entry.id] = tonumber(entry.count) or 0
+        end
+    end
 
     -- Collect human-friendly labels from tag list
     for _, tag in ipairs(tags_data.tags or {}) do
@@ -319,6 +335,7 @@ function FreshRSS:buildTreeFromData(subs_data, tags_data)
             id = cat_id,
             title = title,
             children = {},
+            unreadCount = unread_by_id[cat_id] or 0,
         }
         folders_map[cat_id] = folder
         table.insert(folders, folder)
@@ -336,7 +353,7 @@ function FreshRSS:buildTreeFromData(subs_data, tags_data)
                 title = feed.title,
                 url = feed.htmlUrl,
                 feed_url = (type(feed.id) == "string" and feed.id:gsub("^feed/", "")) or feed.id,
-                unreadCount = feed.unreadCount or 0,
+                unreadCount = unread_by_id[feed.id] or feed.unreadCount or 0,
             },
         }
         feeds_map[feed.id] = feed_node
