@@ -1005,6 +1005,7 @@ end
 --- Opens the tree view. opts.skip_start: ignore "Open on startup".
 function Tree.open(plugin, opts)
     require("rssreader_kindle_statusbar").logState() -- once per run, Kindle only
+    Chrome.guardCoveredRefresh() -- once per run
     -- Already open (under SimpleUI's home screen, or opened again by a gesture):
     -- that one comes to the front, no second view.
     local open_app = running.app

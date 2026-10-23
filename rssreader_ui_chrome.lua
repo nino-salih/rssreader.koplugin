@@ -89,6 +89,27 @@ function Chrome.repaintTop(widget, height)
     UIManager:scheduleIn(3, refresh)
 end
 
+--- Once per KOReader run: when a window under the reader's windows asks for a
+-- screen refresh, the reader's top window is painted again first, so the refresh
+-- shows the reader and not the Kindle status bar (rssreader_ui_model.coveringWindow).
+local guarded = false
+function Chrome.guardCoveredRefresh()
+    if guarded then
+        return
+    end
+    guarded = true
+    local setDirty = UIManager.setDirty
+    UIManager.setDirty = function(manager, widget, ...)
+        if type(widget) == "table" then
+            local cover = Model.coveringWindow(manager._window_stack, widget)
+            if cover then
+                setDirty(manager, cover)
+            end
+        end
+        return setDirty(manager, widget, ...)
+    end
+end
+
 --- Geometry of the frame for the current screen (computed on demand, never cached:
 -- the screen can rotate).
 function Chrome.metrics()

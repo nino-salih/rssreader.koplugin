@@ -1129,4 +1129,31 @@ function Model.raiseWindows(stack, page, owned)
     return result
 end
 
+--- The reader's top full-screen window when it covers `widget`, else nil.
+-- A covered window still queues its screen refresh (SimpleUI updates the clock of
+-- its covered home screen every minute). KOReader does not paint covered windows,
+-- so the refresh shows the framebuffer as it is. On a Kindle, the framework draws
+-- its status bar into the same framebuffer, and the refresh shows that bar. The
+-- caller repaints the returned window first.
+function Model.coveringWindow(stack, widget)
+    for i = #stack, 1, -1 do
+        local top = stack[i].widget
+        if top == widget then
+            return nil
+        end
+        if top.covers_fullscreen then
+            if not tostring(top.name or ""):match("^rssreader") then
+                return nil
+            end
+            for j = i - 1, 1, -1 do
+                if stack[j].widget == widget then
+                    return top
+                end
+            end
+            return nil
+        end
+    end
+    return nil
+end
+
 return Model
