@@ -261,6 +261,37 @@ describe("rssreader_adapters/freshrss", function()
         assert.truthy(err)
     end)
 
+    it("applies one action to many articles in one edit-tag request", function()
+        local adapter = newAdapter()
+        local before = #helpers.http.calls
+        assert.is_true(adapter.applyActions("read", { "item-1", "item-2", "item-3" }))
+        local edits = 0
+        for i = before + 1, #helpers.http.calls do
+            if helpers.http.calls[i].url:find("/edit-tag", 1, true) then
+                edits = edits + 1
+            end
+        end
+        assert.equals(1, edits)
+        local body = lastCall("/edit-tag").body
+        assert.truthy(body:find("a=user%2f%2d%2fstate%2fcom%2egoogle%2fread", 1, true), body)
+        assert.truthy(body:find("i=item%2d1&i=item%2d2&i=item%2d3", 1, true), body)
+
+        assert.is_true(adapter.applyActions("unstar", { "item-4", "item-5" }))
+        body = lastCall("/edit-tag").body
+        assert.truthy(body:find("r=user%2f%2d%2fstate%2fcom%2egoogle%2fstarred", 1, true), body)
+        assert.falsy(body:find("&a=", 1, true), body)
+
+        local ok, err, kind = adapter.applyActions("explode", { "item-9" })
+        assert.is_false(ok)
+        assert.equals("other", kind)
+        assert.truthy(err)
+
+        withRoutes({ { "/edit-tag", { error = "timeout" } } })
+        ok, _, kind = newAdapter().applyActions("read", { "item-1", "item-2" })
+        assert.is_false(ok)
+        assert.equals("network", kind)
+    end)
+
     it("maps HTTP failures to error kinds", function()
         withRoutes({ { "/accounts/ClientLogin", { code = 401, body = "Unauthorized", status = "HTTP/1.1 401 Unauthorized" } } })
         local ok, _, kind = newAdapter().fetchTree()

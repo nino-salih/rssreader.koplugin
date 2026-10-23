@@ -24,6 +24,13 @@ local MARK_METHODS = {
     star = "markStoryAsStarred",
     unstar = "markStoryAsUnstarred",
 }
+-- Tag added / removed by an action, for edit-tag with many ids (applyActions).
+local MARK_TAGS = {
+    read = { add = READ_TAG },
+    unread = { remove = READ_TAG },
+    star = { add = STARRED_TAG },
+    unstar = { remove = STARRED_TAG },
+}
 
 -- Same rule as the (local) helper in rssreader_freshrss.lua: stream ids are
 -- path structure, so "/" stays unescaped.
@@ -305,6 +312,19 @@ function Adapter.new(client, account, env)
             return false, "unknown action: " .. tostring(action and action.action), "other"
         end
         local ok, err = client[method](client, nil, { id = action.article_id })
+        if not ok then
+            return Common.fail(err)
+        end
+        return true
+    end
+
+    --- Optional extension: one action for many articles (ids), in one edit-tag request.
+    function adapter.applyActions(action, article_ids)
+        local tags = MARK_TAGS[action]
+        if not tags then
+            return false, "unknown action: " .. tostring(action), "other"
+        end
+        local ok, err = client:markStories(article_ids, tags.add, tags.remove)
         if not ok then
             return Common.fail(err)
         end

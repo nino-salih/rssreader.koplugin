@@ -25,6 +25,9 @@ Optional extensions (the sync checks for them):
   result.all_ids             fetchUnread of a backend without server state (local feeds):
                              ids of ALL stories still in the feed; the sync forgets other
                              rows of the feed and counts unread articles itself.
+  applyActions(action, article_ids) -> true | false, err, kind   one action for many
+                             articles in one request; the sync sends up to Sync.ACTION_BATCH
+                             ids per call and falls back to applyAction when it is refused.
   fetchStarred(limit)        -> true, { articles }   starred articles, read or not
                              (used when supports("star")).
   fetchUnreadIds(feed_id, cap), fetchStarredIds(cap)   with supports("ids"):

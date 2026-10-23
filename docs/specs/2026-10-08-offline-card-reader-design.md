@@ -95,6 +95,7 @@ Optionale Erweiterungen (der Sync prüft, ob es sie gibt; vollständig beschrieb
 | Erweiterung | Zweck |
 |---|---|
 | `result.all_ids` (aus `fetchUnread`) | Backends ohne Serverstatus (lokale Feeds): alle IDs, die noch im Feed stehen; der Sync vergisst andere Zeilen des Feeds und zählt Ungelesene selbst. |
+| `applyActions(action, article_ids)` | Eine Aktion für viele Artikel in einer Anfrage (FreshRSS: `edit-tag` mit wiederholtem `i=`). Der Sync schickt bis zu `Sync.ACTION_BATCH = 100` IDs je Anfrage. |
 | `fetchStarred(limit)` | Gemerkte Artikel, gelesen oder nicht (bei `supports("star")`). |
 | `fetchUnreadIds(feed_id, cap)`, `fetchStarredIds(cap)` | Bei `supports("ids")`: Menge **aller** ungelesenen IDs eines Feeds bzw. aller gemerkten IDs des Kontos, gleiche ID-Form wie die Artikel. Mehr als `cap` IDs → Fehler, denn eine unvollständige Menge darf nie verwendet werden. |
 | `fetchIdList(feed_id, opts)`, `fetchByIds(ids)` | Bei `supports("ids")`: geordnete ID-Liste (neueste zuerst, auf Wunsch mit gelesenen) und Abruf genau dieser Artikel; für die Kartenlisten des Cache-Modus ([2026-10-13](2026-10-13-alle-artikel-eines-feeds-design.md), Abschnitt 3). |
@@ -170,7 +171,9 @@ CREATE TABLE meta (account TEXT NOT NULL, key TEXT NOT NULL, value TEXT, PRIMARY
 Auslöser: ⟳ in der Kopfzeile oder ≡ > Synchronisieren. Läuft je aktivem Konto:
 
 1. **Queue senden** in `seq`-Reihenfolge; ein Eintrag wird erst nach Serverbestätigung gelöscht.
-   Aufeinanderfolgende Gegenaktionen (read→unread) werden vorher zusammengefasst.
+   Aufeinanderfolgende Gegenaktionen (read→unread) werden vorher zusammengefasst. Mit `applyActions`
+   gehen die Einträge je Aktion in Blöcken zu 100 hinaus. Lehnt der Server einen Block ab (weder
+   Anmelde- noch Netzfehler), wird er Eintrag für Eintrag wiederholt, damit `not_found` greift.
 2. **Baum und Zähler** per `fetchTree()`; `feeds` wird ersetzt (Transaktion). Neue Feeds und Ordner
    kommen so in jedem Sync dazu, ihre Artikel lädt Schritt 3 im selben Sync. Artikel von Feeds, die nicht
    mehr im Baum stehen (auf dem Server abbestellt), werden danach gelöscht – Zeile, Bildzeilen und

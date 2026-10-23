@@ -66,6 +66,15 @@ local function fakeAdapter(log, spec)
         end
         return true
     end
+    if spec.batch then
+        function adapter.applyActions(action, article_ids)
+            table.insert(log, "actions:" .. action .. ":" .. table.concat(article_ids, ","))
+            if spec.apply_batch then
+                return spec.apply_batch(action, article_ids)
+            end
+            return true
+        end
+    end
     function adapter.supports(feature)
         return feature == "star" or (feature == "ids" and (spec.ids ~= nil or spec.id_list ~= nil))
     end
@@ -469,6 +478,73 @@ describe("rssreader_sync", function()
         result = Sync.flushQueue(deps({ is_online = function() return false end }), HOME)
         assert.is_true(result.offline)
         assert.equals(1, #Store.pendingActions(db, "freshrss:Home"))
+    end)
+
+    describe("queue in batches (adapter.applyActions)", function()
+        local function queue(action, ...)
+            for _, id in ipairs({ ... }) do
+                Store.setStatus(db, "freshrss:Home", id, action, NOW)
+            end
+        end
+
+        it("sends one request per action for several articles", function()
+            queue("read", "a1", "a2", "a3")
+            queue("star", "a1")
+            queue("unread", "a4")
+            specs.Home = { batch = true }
+            local result = Sync.flushQueue(deps(), HOME)
+            -- A single article goes through applyAction.
+            assert.same({ "actions:read:a1,a2,a3", "action:star:a1", "action:unread:a4" }, log)
+            assert.equals(5, result.sent)
+            assert.same({}, Store.pendingActions(db, "freshrss:Home"))
+        end)
+
+        it("splits a long queue into requests of Sync.ACTION_BATCH articles", function()
+            for i = 1, Sync.ACTION_BATCH * 2 + 5 do
+                queue("read", "a" .. i)
+            end
+            local sizes = {}
+            specs.Home = { batch = true, apply_batch = function(_, article_ids)
+                table.insert(sizes, #article_ids)
+                return true
+            end }
+            local result = Sync.flushQueue(deps(), HOME)
+            assert.same({ Sync.ACTION_BATCH, Sync.ACTION_BATCH, 5 }, sizes)
+            assert.equals(Sync.ACTION_BATCH * 2 + 5, result.sent)
+            assert.same({}, Store.pendingActions(db, "freshrss:Home"))
+        end)
+
+        it("keeps the whole queue when a request fails on the network", function()
+            queue("read", "a1", "a2", "a3")
+            queue("star", "a1", "a2")
+            specs.Home = { batch = true, apply_batch = function() return false, "timeout", "network" end }
+            local result = Sync.flushQueue(deps(), HOME)
+            assert.same({ "actions:read:a1,a2,a3" }, log)
+            assert.equals(0, result.sent)
+            assert.equals(5, result.failed)
+            assert.equals("network", result.kind)
+            assert.equals(5, #Store.pendingActions(db, "freshrss:Home"))
+        end)
+
+        it("sends a refused request again one article at a time", function()
+            queue("read", "a1", "a2")
+            specs.Home = {
+                batch = true,
+                apply_batch = function() return false, "HTTP 500", "other" end,
+                apply = function(action)
+                    if action.article_id == "a2" then
+                        return false, "HTTP 404", "not_found"
+                    end
+                    return true
+                end,
+            }
+            local result = Sync.flushQueue(deps(), HOME)
+            assert.same({ "actions:read:a1,a2", "action:read:a1", "action:read:a2" }, log)
+            assert.equals(1, result.sent)
+            assert.equals(1, result.discarded)
+            assert.equals(0, result.failed)
+            assert.same({}, Store.pendingActions(db, "freshrss:Home"))
+        end)
     end)
 
     it("refreshList loads a card list live (cache-only mode) incl. thumbnails", function()

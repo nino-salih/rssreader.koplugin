@@ -60,6 +60,8 @@ Sync.PAGE_IMAGES_MAX = 150
 -- Articles per image batch (step 4): their page lookups run in parallel, and
 -- all their images go into one parallel download.
 Sync.IMAGE_BATCH = 16
+-- Queue entries per request of adapters with applyActions (step 1).
+Sync.ACTION_BATCH = 100
 
 local function store(deps)
     return deps.store or require("rssreader_store")
@@ -103,7 +105,26 @@ local isDiskFull = Sync.isDiskFull
 
 -- Queue -----------------------------------------------------------------------
 
---- Sends the collapsed queue of one account in seq order (spec 5.1, 9).
+--- Pure: the collapsed queue as batches of one action each, at most `size`
+-- entries, in the order the actions first appear. The collapsed queue holds one
+-- entry per article and kind, so the order between batches does not matter.
+function Sync.actionBatches(actions, size)
+    local batches, open = {}, {}
+    for _, action in ipairs(actions) do
+        local batch = open[action.action]
+        if not batch or #batch >= size then
+            batch = {}
+            open[action.action] = batch
+            table.insert(batches, batch)
+        end
+        table.insert(batch, action)
+    end
+    return batches
+end
+
+--- Sends the collapsed queue of one account (spec 5.1, 9): with
+-- adapter.applyActions in batches of Sync.ACTION_BATCH articles per action
+-- (a refused batch goes again one entry at a time), else in seq order.
 -- Returns { sent, discarded, failed, kind, message } or { offline = true }.
 function Sync.flushQueue(deps, account, adapter)
     if not isOnline(deps) then
@@ -120,23 +141,56 @@ function Sync.flushQueue(deps, account, adapter)
     end
     local key = accountKey(deps, account)
     local actions = store(deps).pendingActions(deps.db, key)
-    for index, action in ipairs(actions) do
-        local ok, message, kind = adapter.applyAction(action)
-        if ok then
-            store(deps).confirmAction(deps.db, action)
-            result.sent = result.sent + 1
-        elseif kind == "not_found" then
-            logger.warn("RSSReader sync: dropping queue entry", key, action.action, action.article_id, message)
-            store(deps).discardAction(deps.db, action)
-            result.discarded = result.discarded + 1
-        elseif kind == "auth" or kind == "network" then
-            -- The remaining entries would fail the same way; they stay queued.
-            result.failed = result.failed + #actions - index + 1
-            result.kind, result.message = kind, message
-            return result
-        else
-            result.failed = result.failed + 1
-            result.kind, result.message = kind or "other", message
+    local left = #actions
+    -- The remaining entries would fail the same way; they stay queued.
+    local function stop(kind, message)
+        result.failed = result.failed + left
+        result.kind, result.message = kind, message
+        return result
+    end
+    local batches = Sync.actionBatches(actions, adapter.applyActions and Sync.ACTION_BATCH or 1)
+    for _, batch in ipairs(batches) do
+        local sent = false
+        if #batch > 1 then
+            local article_ids = {}
+            for _, action in ipairs(batch) do
+                table.insert(article_ids, action.article_id)
+            end
+            local ok, message, kind = adapter.applyActions(batch[1].action, article_ids)
+            if ok then
+                -- One transaction: 100 commits cost seconds on the Kindle.
+                transaction(deps, function()
+                    for _, action in ipairs(batch) do
+                        store(deps).confirmAction(deps.db, action)
+                    end
+                end)
+                result.sent = result.sent + #batch
+                left = left - #batch
+                sent = true
+            elseif kind == "auth" or kind == "network" then
+                return stop(kind, message)
+            else
+                logger.warn("RSSReader sync: batch refused, sending one by one", key, batch[1].action, #batch, message)
+            end
+        end
+        if not sent then
+            for _, action in ipairs(batch) do
+                local ok, message, kind = adapter.applyAction(action)
+                if ok then
+                    store(deps).confirmAction(deps.db, action)
+                    result.sent = result.sent + 1
+                elseif kind == "not_found" then
+                    logger.warn("RSSReader sync: dropping queue entry", key, action.action, action.article_id, message)
+                    store(deps).discardAction(deps.db, action)
+                    result.discarded = result.discarded + 1
+                elseif kind == "auth" or kind == "network" then
+                    return stop(kind, message)
+                else
+                    result.failed = result.failed + 1
+                    result.kind, result.message = kind or "other", message
+                end
+                left = left - 1
+            end
         end
     end
     return result
