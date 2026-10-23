@@ -22,7 +22,7 @@ The pictures in this README show the demo mode of the emulator. Their text is fr
 ### Navigation and cards
 
 <p align="center">
-  <img src="docs/images/views.gif" width="482" alt="Home screen, folder and the four card styles">
+  <img src="docs/images/views.gif" width="364" alt="Home screen, folder and the four card styles">
 </p>
 <p align="center"><em>The home screen, the folder "Classics" and one card list in the four card styles.</em></p>
 
@@ -41,7 +41,7 @@ The pictures in this README show the demo mode of the emulator. Their text is fr
 ### Reading
 
 <p align="center">
-  <img src="docs/images/quick-reader.gif" width="482" alt="Moby-Dick, chapter 1, in the quick reader">
+  <img src="docs/images/quick-reader.gif" width="364" alt="Moby-Dick, chapter 1, in the quick reader">
 </p>
 <p align="center"><em>A tap on the card opens Moby-Dick, chapter 1, in the quick reader. Each swipe up shows the next page.</em></p>
 
@@ -66,7 +66,7 @@ Controls of the quick reader:
 ### Reader settings
 
 <p align="center">
-  <img src="docs/images/reader-settings.gif" width="482" alt="Reader settings: font size, line spacing, font">
+  <img src="docs/images/reader-settings.gif" width="364" alt="Reader settings: font size, line spacing, font">
 </p>
 <p align="center"><em>A new font size, line spacing and font in the reader settings. The article shows each change.</em></p>
 

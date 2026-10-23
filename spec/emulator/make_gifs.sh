@@ -6,7 +6,7 @@
 #
 # OUT_DIR (default docs/images) gets views.gif, quick-reader.gif, reader-settings.gif
 # and one still PNG per GIF (for places where a GIF does not move).
-# Frames: 45 % (482 px wide), 16 levels of gray (as on the e-ink screen), 1.7 s each,
+# Frames: SCALE (default 34 %, 364 px wide), 16 levels of gray (as on the e-ink screen), 1.7 s each,
 # 3 s on the first and the last frame, endless loop.
 set -euo pipefail
 
@@ -14,6 +14,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 FRAMES="${1:?usage: $0 FRAMES_DIR [OUT_DIR]}"
 OUT="${2:-$ROOT/docs/images}"
 DELAY=170
+SCALE="${SCALE:-34%}"
 DELAY_END=300
 mkdir -p "$OUT"
 
@@ -38,9 +39,9 @@ make_gif() {
         fi
         args+=("$FRAMES/$frame.png")
     done
-    convert "${args[@]}" -resize 45% -colorspace Gray -dither FloydSteinberg -remap "$PALETTE" \
+    convert "${args[@]}" -resize "$SCALE" -colorspace Gray -dither FloydSteinberg -remap "$PALETTE" \
         -layers Optimize -loop 0 "$OUT/$name.gif"
-    convert "$FRAMES/$still.png" -resize 45% -colorspace Gray -dither FloydSteinberg -remap "$PALETTE" \
+    convert "$FRAMES/$still.png" -resize "$SCALE" -colorspace Gray -dither FloydSteinberg -remap "$PALETTE" \
         -strip "$OUT/$name.png"
     echo "$OUT/$name.gif: $(stat -c %s "$OUT/$name.gif") bytes, $count frames"
 }

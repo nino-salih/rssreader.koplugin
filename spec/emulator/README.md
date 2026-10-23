@@ -124,6 +124,6 @@ wsl.exe -d Ubuntu-24.04 --exec bash -lc 'cd /mnt/c/Users/ar-ns/Documents/rssread
   `settings-*` (reader settings: font size 24, line spacing 2.0, font Noto Sans, the article after
   each change). `RSSREADER_EMU_STEPS` selects steps here too.
 - `make_gifs.sh FRAMES [OUT]` builds `views.gif`, `quick-reader.gif` and `reader-settings.gif` plus one
-  still PNG per GIF in `docs/images` (or OUT): 45 % size, 16 levels of gray, 1.7 s per frame, 3 s on the
+  still PNG per GIF in `docs/images` (or OUT): 34 % size (set SCALE to change it), 16 levels of gray, 1.7 s per frame, 3 s on the
   first and the last frame, endless loop.
 - Look at the frames before you commit new GIFs: no error dialog, readable text.
