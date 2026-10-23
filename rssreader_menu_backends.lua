@@ -1386,7 +1386,7 @@ function backends.showFreshRSSFeed(self, account, client, feed_node, opts)
         
         -- Only apply time filter for the "Today" feed  
         if feed_node.id == "freshrss_today_unread" then  
-            fetch_options.published_since = utils.getStartOfTodayTimestamp() * 1000000  
+            fetch_options.published_since = utils.getStartOfTodayTimestamp() -- seconds
         end  
         
         if not opts.page then  

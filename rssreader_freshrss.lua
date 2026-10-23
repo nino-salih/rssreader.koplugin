@@ -441,8 +441,8 @@ function FreshRSS:fetchStories(feed_id, options)
     end
 
     if options.published_since then
-        -- 'nt' means "newer than"
-        query.nt = options.published_since 
+        -- FreshRSS reads 'ot' as the start time in whole seconds ('nt' is the end time).
+        query.ot = string.format("%d", tonumber(options.published_since) or 0)
     end
  
     if options.read_filter == "unread_only" then
