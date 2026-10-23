@@ -4,7 +4,9 @@ writes screenshots (spec/emulator/run.sh). Active only when the environment
 variable RSSREADER_EMU_SHOTS names the output folder; quits KOReader at the end.
 Uses the local test accounts of spec/emulator/config. Only with
 RSSREADER_EMU_FRESHRSS=1 (real-server mode of run.sh) it syncs the FreshRSS test
-account twice, read-only, and takes no screenshots (realSync).
+account twice, read-only, and takes no screenshots (realSync). With
+RSSREADER_EMU_DEMO=1 (demo mode of run.sh) it takes the frames of the README GIFs
+with the book feeds of spec/emulator/make_demo_feeds.py (demo).
 ]]
 
 local Device = require("device")
@@ -433,6 +435,139 @@ local function liveCheck(rss)
     nextStep()
 end
 
+-- Runs the steps { name, function, delay } one after the other with a shot after
+-- each step, then quits. RSSREADER_EMU_STEPS (Lua pattern, optional): run only the
+-- steps whose name matches, e.g. "^0[134]%-|^18|^2[12]" (setup, quick reader, page breaks).
+local function runSteps(steps)
+    local only = os.getenv("RSSREADER_EMU_STEPS")
+    if only and only ~= "" then
+        local kept = {}
+        for _, step in ipairs(steps) do
+            for alt in only:gmatch("[^|]+") do
+                if step[1]:match(alt) then
+                    table.insert(kept, step)
+                    break
+                end
+            end
+        end
+        steps = kept
+    end
+    local index = 0
+    local function nextStep()
+        if index > 0 then
+            shot(steps[index][1])
+        end
+        index = index + 1
+        if index > #steps then
+            UIManager:quit()
+            return
+        end
+        local ok, err = pcall(steps[index][2])
+        if not ok then
+            logger.err("EMU step failed:", steps[index][1], err)
+        end
+        UIManager:scheduleIn(steps[index][3] or STEP_DELAY, nextStep)
+    end
+    nextStep()
+end
+
+-- Demo mode (RSSREADER_EMU_DEMO=1): the frames of the README GIFs with the book
+-- chapters of spec/emulator/make_demo_feeds.py. Three groups of shots:
+-- "views-*" (tree, folder, the four card styles), "quick-*" (Moby-Dick chapter 1 in
+-- the quick reader, one shot per page, real swipes) and "settings-*" (reader
+-- settings: font size, line spacing, font, each with the article after the change).
+local function demo(rss)
+    local Chrome = require("rssreader_ui_chrome")
+    local Model = require("rssreader_ui_model")
+    local Reader = require("rssreader_ui_reader")
+    local SettingsUI = require("rssreader_ui_settings")
+    local Store = require("rssreader_store")
+    local Sync = require("rssreader_sync")
+    local Tree = require("rssreader_ui_tree")
+    local db = require("rssreader_storage").get()
+
+    G_reader_settings:delSetting(SettingsUI.KEY)
+    local settings = SettingsUI.load()
+    local summary = Sync.run(Sync.deviceDeps(db, rss.accounts), rss.accounts:getAccounts(), Model.syncSettings(settings))
+    logger.info("EMU demo sync:", Model.syncSummaryText(summary), "articles", summary.articles,
+        "images", summary.images, "errors", #summary.errors)
+    Store.setMeta(db, "", "last_sync", tostring(os.time() - 10 * 60))
+
+    local account = "local:Library"
+    local base = "http://127.0.0.1:8766/feeds/"
+    local app
+    local function restyle(style)
+        app.settings.card_style = style
+        app.page.on_jump(#app.stack) -- re-renders the current level
+    end
+    -- Swipe up = next page (Model.READER_INPUT).
+    local function swipeNext()
+        gesture({ ges = "swipe", direction = "north", distance = 300,
+            pos = Geom:new{ x = 536, y = 900, w = 0, h = 0 } })
+    end
+    -- Reader settings, then the row `row` (a SpinWidget opens), then `ups` real taps
+    -- on its up button. The pause lets each tap find the new widget (it is built again).
+    local function openSettings(row, ups)
+        topWidget():showSettings()
+        UIManager:scheduleIn(0.5, function()
+            tapButton(row)
+            for i = 1, ups do
+                UIManager:scheduleIn(0.4 * i, function() tapButton("\u{25B2}") end)
+            end
+        end)
+    end
+    local steps = {
+        { "views-01-home", function() app = Tree.open(rss, { skip_start = true }) end },
+        { "views-02-folder", function()
+            app.open({ kind = "folder", account = account, folder_id = "Classics", title = "Classics" })
+        end },
+        { "views-03-cards-large", function()
+            app.open({ kind = "list", account = account, feed_id = base .. "moby-dick.xml", title = "Moby-Dick" })
+        end },
+        { "views-04-cards-compact", function() restyle("compact") end },
+        { "views-05-cards-text", function() restyle("text") end },
+        { "views-06-cards-minimal", function() restyle("minimal") end },
+        { "quick-01-cards", function() restyle("large") end },
+        -- A real tap on the first card (chapter 1 is the newest) opens the quick reader.
+        { "quick-02-page1", function()
+            local m = Chrome.metrics()
+            tap(m.width / 2, m.header_h + 60)
+        end, 2 },
+        { "quick-03-page2", swipeNext },
+        { "quick-04-page3", swipeNext },
+        { "quick-05-page4", swipeNext },
+        { "quick-06-page5", swipeNext },
+        { "quick-07-page6", swipeNext },
+        -- Chapter 1 again from its first page (the reader keeps the last page).
+        { "settings-01-article", function()
+            topWidget():onClose()
+            app.ctx.saveReadPosition(app.articles[1], nil)
+            UIManager:show(Reader:new{ ctx = app.ctx, articles = app.articles, index = 1, on_close = function() end })
+        end, 2 },
+        { "settings-02-dialog", function() topWidget():showSettings() end },
+        { "settings-03-font-size", function()
+            closeTop()
+            openSettings(string.format("Font size: %d", app.settings.reader_font_size), 4)
+        end, 3.5 },
+        { "settings-04-font-size-done", function() tapButton("Apply") end, 2 },
+        { "settings-05-line-spacing", function()
+            openSettings(string.format("Line spacing: %.1f", app.settings.reader_line_spacing / 10), 5)
+        end, 4 },
+        { "settings-06-line-spacing-done", function() tapButton("Apply") end, 2 },
+        { "settings-07-font", function()
+            topWidget():showSettings()
+            UIManager:scheduleIn(0.5, function() tapButton("Font") end)
+        end, 2 },
+        { "settings-08-font-done", function()
+            tapButton("Noto Sans")
+            UIManager:scheduleIn(1, function()
+                logger.info("EMU demo font:", app.settings.reader_font_file)
+            end)
+        end, 2 },
+    }
+    runSteps(steps)
+end
+
 function Driver:run()
     local rss = self.ui.rssreader
     if os.getenv("RSSREADER_EMU_FRESHRSS") == "1" then
@@ -440,6 +575,9 @@ function Driver:run()
             return liveCheck(rss)
         end
         return realSync(rss)
+    end
+    if os.getenv("RSSREADER_EMU_DEMO") == "1" then
+        return demo(rss)
     end
     local Chrome = require("rssreader_ui_chrome")
     local Model = require("rssreader_ui_model")
@@ -1095,38 +1233,7 @@ function Driver:run()
             plugin:openAccountList({ skip_restore = true })
         end },
     }
-    -- RSSREADER_EMU_STEPS (Lua pattern, optional): run only the steps whose name
-    -- matches, e.g. "^0[134]%-|^18|^2[12]" (setup, quick reader, page breaks).
-    local only = os.getenv("RSSREADER_EMU_STEPS")
-    if only and only ~= "" then
-        local kept = {}
-        for _, step in ipairs(steps) do
-            for alt in only:gmatch("[^|]+") do
-                if step[1]:match(alt) then
-                    table.insert(kept, step)
-                    break
-                end
-            end
-        end
-        steps = kept
-    end
-    local index = 0
-    local function nextStep()
-        if index > 0 then
-            shot(steps[index][1])
-        end
-        index = index + 1
-        if index > #steps then
-            UIManager:quit()
-            return
-        end
-        local ok, err = pcall(steps[index][2])
-        if not ok then
-            logger.err("EMU step failed:", steps[index][1], err)
-        end
-        UIManager:scheduleIn(steps[index][3] or STEP_DELAY, nextStep)
-    end
-    nextStep()
+    runSteps(steps)
 end
 
 return Driver

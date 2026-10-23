@@ -95,3 +95,35 @@ only. Run them with `RSSREADER_EMU_STEPS='^01|^04|^23'`. Only some steps: `RSSRE
 (Lua patterns separated by `|`, matched against the step names).
 To look at them in reduced size:
 `for f in *.png; do convert "$f" -resize 45% small/$f; done`.
+
+## Demo mode (README GIFs)
+
+```sh
+wsl.exe -d Ubuntu-24.04 --exec bash -lc 'cd /mnt/c/Users/ar-ns/Documents/rssreader.koplugin && RSSREADER_EMU_DEMO=1 bash spec/emulator/run.sh /mnt/c/path/to/frames'
+wsl.exe -d Ubuntu-24.04 --exec bash -lc 'cd /mnt/c/Users/ar-ns/Documents/rssreader.koplugin && bash spec/emulator/make_gifs.sh /mnt/c/path/to/frames'
+```
+
+- The demo mode shows real book text instead of test words. `make_demo_feeds.py` downloads public-domain
+  books from Project Gutenberg (Moby-Dick, Pride and Prejudice, Alice's Adventures in Wonderland, The
+  Adventures of Sherlock Holmes, Treasure Island, The Time Machine). It removes the Project Gutenberg
+  header and footer and writes one feed per book with one article per chapter (8 chapters).
+- The books go to `~/rssreader-dev/emu-www-demo/books` once. Later runs use these files again. The book
+  texts are never in the repo.
+- Card images: ImageMagick draws them (gray gradient, book title, chapter). Every fourth chapter has no
+  image. The script downloads no images.
+- One local account "Library" with the folders "Classics" (4 books) and "Adventure" (2 books):
+  `config/emu_demo_configuration.lua` and `config/emu_demo_local_defaults.lua`.
+- The demo mode has its own data dir `~/rssreader-dev/emu-home-demo`, config `~/rssreader-dev/emu-config-demo`,
+  feeds `~/rssreader-dev/emu-www-demo`, log `~/rssreader-dev/emu-demo.log` and port 8766. You can run
+  it at the same time as a normal run (port 8765). It does not work with `RSSREADER_EMU_FRESHRSS` or
+  `RSSREADER_EMU_SIMPLEUI`.
+- The font list shows only the fonts of KOReader (`XDG_DATA_HOME` points into the demo data dir).
+- Without a frames folder you get the interactive window with the demo library.
+- The driver writes three groups of frames: `views-*` (home, folder, card styles large, compact, text
+  and minimal), `quick-*` (a tap on Moby-Dick chapter 1, then one frame per page, real swipes up) and
+  `settings-*` (reader settings: font size 24, line spacing 2.0, font Noto Sans, the article after
+  each change). `RSSREADER_EMU_STEPS` selects steps here too.
+- `make_gifs.sh FRAMES [OUT]` builds `views.gif`, `quick-reader.gif` and `reader-settings.gif` plus one
+  still PNG per GIF in `docs/images` (or OUT): 45 % size, 16 levels of gray, 1.7 s per frame, 3 s on the
+  first and the last frame, endless loop.
+- Look at the frames before you commit new GIFs: no error dialog, readable text.

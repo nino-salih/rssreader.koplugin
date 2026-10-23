@@ -12,6 +12,10 @@
 #   RSSREADER_EMU_FRESHRSS=1 RSSREADER_EMU_IMGPROXY=1 spec/emulator/run.sh OUT_DIR
 #                                    the same with the image proxy of
 #                                    RSSREADER_TEST_IMGPROXY_URL/_USER/_PASSWORD
+#   RSSREADER_EMU_DEMO=1 spec/emulator/run.sh [SHOTS_DIR]
+#                                    demo mode: chapters of Project Gutenberg books as feeds,
+#                                    own data dir and port 8766; with SHOTS_DIR the frames of
+#                                    the README GIFs (spec/emulator/make_gifs.sh builds them)
 #
 # Everything lives below $RSSREADER_DEV (default ~/rssreader-dev); nothing system-wide.
 set -euo pipefail
@@ -29,6 +33,31 @@ LOG="$DEV/emu.log"
 PORT=8765
 SHOTS="${1:-}"
 FRESHRSS="${RSSREADER_EMU_FRESHRSS:-}"
+DEMO="${RSSREADER_EMU_DEMO:-}"
+
+if [ -n "$DEMO" ]; then
+    if [ -n "$FRESHRSS" ] || [ "${RSSREADER_EMU_SIMPLEUI:-}" = "1" ]; then
+        echo "demo mode does not go together with RSSREADER_EMU_FRESHRSS or RSSREADER_EMU_SIMPLEUI" >&2
+        exit 2
+    fi
+    # Own data dir, config, feeds, log and port: a normal run can go on at the same time.
+    DATA="$DEV/emu-home-demo"
+    CONF="$DEV/emu-config-demo"
+    WWW="$DEV/emu-www-demo"
+    LOG="$DEV/emu-demo.log"
+    PORT=8766
+    export RSSREADER_EMU_DEMO=1
+    # The font list shows the fonts of KOReader only (as on the Kindle), not the user
+    # fonts of the WSL account (~/.local/share/fonts).
+    export XDG_DATA_HOME="$DATA/share"
+    # A new data dir starts like the normal one: no quickstart guide (KOReader opens it
+    # instead of the file manager), no first-start message about color rendering.
+    mkdir -p "$DATA"
+    if [ ! -f "$DATA/settings.reader.lua" ]; then
+        printf 'return {\n    ["color_rendering"] = true,\n    ["quickstart_shown_version"] = 999999999999,\n}\n' \
+            > "$DATA/settings.reader.lua"
+    fi
+fi
 
 if [ -n "$FRESHRSS" ]; then
     if [ -z "$SHOTS" ]; then
@@ -107,6 +136,12 @@ trap cleanup EXIT
 
 if [ -n "$FRESHRSS" ]; then
     cp "$HERE/config/emu_freshrss_configuration.lua" "$CONF/rssreader_configuration.lua"
+elif [ -n "$DEMO" ]; then
+    cp "$HERE/config/emu_demo_configuration.lua" "$CONF/rssreader_configuration.lua"
+    cp "$HERE/config/emu_demo_local_defaults.lua" "$CONF/rssreader_local_defaults.lua"
+    python3 -I "$HERE/make_demo_feeds.py" "$WWW" "http://127.0.0.1:$PORT" "$KO/fonts/noto/NotoSerif-Bold.ttf" >/dev/null
+    python3 -m http.server "$PORT" --bind 127.0.0.1 --directory "$WWW" >/dev/null 2>&1 &
+    SERVER=$!
 else
     cp "$HERE/config/emu_configuration.lua" "$CONF/rssreader_configuration.lua"
     cp "$HERE/config/emu_local_defaults.lua" "$CONF/rssreader_local_defaults.lua"
