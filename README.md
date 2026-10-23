@@ -90,11 +90,9 @@ and the images are in `<KOReader data folder>/rssreader_offline/`. The reading l
 view, the read state of local feeds and the sanitizer quota are also in this database now. At the first
 start, the plugin copies the old JSON files into the database and renames them to `*.migrated`.
 
-### Kindle notes
-- The plugin was tested on a Kindle Paperwhite 4 with KOReader v2026.07.1, also together with the
-  SimpleUI plugin.
-- The Kindle status bar (clock, Wi-Fi) can show over KOReader after a Wi-Fi change or when another window
-  refreshes the screen. The card reader hides it again.
+### Tested devices
+The plugin was tested on a Kindle Paperwhite 4 with KOReader v2026.07.1, also together with the SimpleUI
+plugin.
 
 ### Development
 - Design documents: [docs/specs](docs/specs).
