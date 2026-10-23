@@ -159,6 +159,33 @@ local function extractAtomLink(raw)
     return fallback
 end
 
+-- RSS <author> is an e-mail address, often with the name in brackets:
+-- "jane@example.org (Jane Doe)" -> "Jane Doe". A bare address is not a name.
+local function authorName(value)
+    value = sanitize(value)
+    if not value then
+        return nil
+    end
+    local name = value:match("%((.-)%)%s*$")
+    if name and util.trim(name) ~= "" then
+        return util.trim(name)
+    end
+    if value:find("^[^%s@]+@[^%s@]+$") then
+        return nil
+    end
+    return value
+end
+
+-- JSON Feed 1.1 "authors" list or 1.0 "author" object.
+local function jsonAuthor(item)
+    local authors = type(item.authors) == "table" and item.authors or { item.author }
+    local first = authors[1]
+    if type(first) == "table" and type(first.name) == "string" then
+        return sanitize(first.name)
+    end
+    return nil
+end
+
 local function parseRSS(content)
     local items = {}
     for raw in content:gmatch("<item[%s>](.-)</item>") do
@@ -174,6 +201,8 @@ local function parseRSS(content)
         if body and body ~= "" then
             body = util.htmlEntitiesToUtf8(body)
         end
+        local author = authorName(raw:match("<dc:creator[^>]*>(.-)</dc:creator>"))
+            or authorName(raw:match("<author[^>]*>(.-)</author>"))
         local pub_date = stripCData(raw:match("<pubDate[^>]*>(.-)</pubDate>"))
             or stripCData(raw:match("<dc:date[^>]*>(.-)</dc:date>"))
             or stripCData(raw:match("<published[^>]*>(.-)</published>"))
@@ -187,6 +216,7 @@ local function parseRSS(content)
                 permalink = link,
                 story_content = body,
                 date = pub_date,
+                author = author,
             }
 
             insertImageCandidate(result, raw:match("<media:content[^>]-url%s*=%s*['\"](.-)['\"]"))
@@ -211,6 +241,8 @@ local function parseAtom(content)
         local content_attrs, content_body = raw:match("<content([^>]*)>(.-)</content>")
         local summary_attrs, summary_body = raw:match("<summary([^>]*)>(.-)</summary>")
         local body = decodeAtomBody(content_body, content_attrs) or decodeAtomBody(summary_body, summary_attrs)
+        local author_block = raw:match("<author[^>]*>(.-)</author>")
+        local author = author_block and sanitize(author_block:match("<name[^>]*>(.-)</name>"))
         local pub_date = stripCData(raw:match("<updated[^>]*>(.-)</updated>"))
             or stripCData(raw:match("<published[^>]*>(.-)</published>"))
         if pub_date then
@@ -222,6 +254,7 @@ local function parseAtom(content)
                 permalink = link,
                 story_content = stripCData(body),
                 date = pub_date,
+                author = author,
             }
 
             insertImageCandidate(result, raw:match("<media:content[^>]-url%s*=%s*['\"](.-)['\"]"))
@@ -250,6 +283,7 @@ local function parseJSON(content)
         local title = sanitize(item.title)
         local link = item.url or item.external_url
         local body = item.content_html or item.content_text or item.summary
+        local author = jsonAuthor(item)
         local pub_date = item.date_published or item.published or item.dateModified or item.date_modified or item.updated
         if type(pub_date) == "string" then
             pub_date = util.trim(pub_date)
@@ -260,6 +294,7 @@ local function parseJSON(content)
                 permalink = link,
                 story_content = stripCData(body),
                 date = pub_date,
+                author = author,
             }
 
             insertImageCandidate(result, item.image or item.banner_image or item.thumbnail)
