@@ -14,11 +14,11 @@ local Model = {}
 
 -- Header path ------------------------------------------------------------------
 
---- Fits path segments into `avail_w`, dropping segments at the FRONT.
--- `measure(text)` returns the width of a text. The last segment is always kept
+--- Fits path segments into `avail_w` and drops segments at the FRONT.
+-- `measure(text)` returns the width of a text. The last segment always stays
 -- (the widget truncates it if it alone is too wide). Returns a list of
--- { text, index }; a leading "..." item has the index of the level just above
--- the first visible segment (tapping it jumps there).
+-- { text, index }. A leading "..." item has the index of the level just above
+-- the first visible segment (a tap on it jumps there).
 function Model.truncatePath(segments, avail_w, measure, sep, ellipsis)
     sep = sep or " > "
     ellipsis = ellipsis or "..."
@@ -50,7 +50,7 @@ function Model.truncatePath(segments, avail_w, measure, sep, ellipsis)
     return items
 end
 
---- "now", "5m", "2h", "3d" since the last sync; "" when there was none.
+--- "now", "5m", "2h", "3d" since the last sync, "" when there was none.
 function Model.sinceLabel(last_sync, now)
     last_sync = tonumber(last_sync)
     if not last_sync or last_sync <= 0 then
@@ -97,7 +97,7 @@ function Model.perPage(avail_h, item_h)
 end
 
 --- Footer pager: nil when everything fits on one page (no "1 / 1", no arrows),
--- else { label, prev = can go back, next = can go on }.
+-- else { label, prev = can go back, next = can go forward }.
 function Model.pager(page, pages)
     if not pages or pages <= 1 then
         return nil
@@ -108,7 +108,7 @@ end
 -- Navigation stack --------------------------------------------------------------
 -- A stack is a list of locations, root first. Locations:
 --   { kind = "root" }                                  "All accounts" overview (several accounts)
---   { kind = "account", account, activate? }           one account's folders and feeds;
+--   { kind = "account", account, activate? }           one account's folders and feeds,
 --                                                      activate = make it the active account (home)
 --   { kind = "folder", account, folder_id }            feeds of a folder
 --   { kind = "list", account?, feed_id | folder_id | special, sort_desc? }  card list
@@ -120,7 +120,7 @@ function Model.navPush(stack, location)
     return result
 end
 
---- One level up; nil at the root (Back there closes the plugin).
+--- One level up, nil at the root (Back there closes the plugin).
 function Model.navPop(stack)
     if #stack <= 1 then
         return nil
@@ -184,7 +184,7 @@ local function feedRow(account, feed)
 end
 
 --- Rows of one account (tree from rssreader_store.listTree): specials, folders, loose feeds.
--- opts.today: the adapter supports "today"; opts.all_accounts: a row opening the
+-- opts.today: the adapter supports "today". opts.all_accounts: a row that opens the
 -- overview of all accounts (home with several accounts), the last row of the first
 -- page (opts.per_page rows per page) so it never moves to a later page.
 function Model.accountRows(account, tree, opts)
@@ -220,8 +220,8 @@ function Model.folderRows(account, folder)
 end
 
 --- "All accounts" overview: { key, name, unread, today } per account.
--- Specials span all accounts; unread_only hides accounts without unread articles.
--- Tapping an account makes it the active account (target.activate).
+-- Specials span all accounts. unread_only hides accounts without unread articles.
+-- A tap on an account makes it the active account (target.activate).
 function Model.rootRows(accounts, unread_only)
     local total, any_today = 0, false
     for _, account in ipairs(accounts) do
@@ -250,7 +250,7 @@ function Model.activeAccountKey(accounts, stored_key)
     return accounts[1] and accounts[1].key or nil
 end
 
---- Home = the account level of the active account; the path starts with its name.
+--- Home = the account level of the active account. The path starts with its name.
 function Model.homeStack(accounts, active_key)
     local key = Model.activeAccountKey(accounts, active_key)
     for _, account in ipairs(accounts) do
@@ -262,7 +262,7 @@ function Model.homeStack(accounts, active_key)
 end
 
 --- Stack at startup: "Open on startup" opens below its own account (for this
--- session; the stored active account stays), otherwise home.
+-- session, the stored active account stays), otherwise home.
 -- `locations` = Model.startPath result (nil/empty = target not found).
 function Model.startStack(accounts, active_key, start_key, locations)
     if not start_key or not locations or #locations == 0 then
@@ -275,7 +275,7 @@ function Model.startStack(accounts, active_key, start_key, locations)
     return stack
 end
 
--- By id; the title is the fallback (the classic view stores other ids for local groups).
+-- By id. The title is the fallback (the classic view stores other ids for local groups).
 local function matches(node, target)
     if target.id ~= nil and tostring(node.id) == tostring(target.id) then
         return true
@@ -345,7 +345,7 @@ function Model.reloadQuery(location, today_start)
     return location.account, { folder_id = location.folder_id, unread_only = false }
 end
 
---- What a sync from `location` covers (spec 2026-10-13): nil = everything; else
+--- What a sync from `location` covers (spec 2026-10-13): nil = everything, else
 -- { account, folder_id | feed_id } (the specials span their whole account).
 function Model.syncScope(location)
     if not location.account then
@@ -378,7 +378,7 @@ local PROGRESS_DETAIL = {
 
 --- Progress text of a sync event (rssreader_sync on_progress): account, stage with
 -- counter and title on lines of their own, so a long counter does not wrap.
--- event.detail ({ kind, left, seconds }, while a batch downloads or looks up
+-- event.detail ({ kind, left, seconds }, while a batch downloads or queries
 -- pages) adds "downloading 12 files (8 s)" as the last line.
 function Model.progressText(event)
     local stage = {
@@ -410,7 +410,7 @@ function Model.progressText(event)
     return table.concat(lines, "\n")
 end
 
---- Next sort direction; nil (default) means newest first.
+--- Next sort direction. nil (default) means newest first.
 function Model.toggleSort(sort_desc)
     if sort_desc == nil then
         return false
@@ -431,7 +431,7 @@ end
 
 --- Short date: time for today, "08 Oct" this year, "08 Oct 2025" before.
 -- Uses the device's local time zone (os.date) on purpose: dates are for the
--- reader. `now` is passed in; specs compare with os.date results, not literals.
+-- reader. The caller passes `now`. Specs compare with os.date results, not literals.
 function Model.formatDate(published, now)
     published = tonumber(published)
     if not published or published <= 0 then
@@ -445,7 +445,7 @@ function Model.formatDate(published, now)
     return os.date("%d %b %Y", published)
 end
 
--- Joins the non-empty parts; a nil part is skipped too (not the end of the list).
+-- Joins the non-empty parts. It also skips a nil part (not the end of the list).
 local function joinParts(parts, sep)
     local kept = {}
     for i = 1, table.maxn(parts) do
@@ -478,7 +478,7 @@ local function initialOf(...)
 end
 
 --- View model of one card. opts: now, thumbnails, exists(path).
--- The meta line names the author (the header path already shows the feed); the
+-- The meta line names the author (the header path already shows the feed). It names the
 -- feed only when the article has no author.
 -- `initial` is the letter of the image placeholder (feed title, else title).
 function Model.cardViewModel(article, opts)
@@ -503,7 +503,7 @@ end
 
 -- Reading speed ----------------------------------------------------------------
 -- Until the quick reader has measured enough pages (reading_seconds in the
--- settings), the reading time assumes DEFAULT_WPM words per minute; then the
+-- settings), the reading time assumes DEFAULT_WPM words per minute. After that, it uses the
 -- reader's own speed (reading_words / reading_seconds).
 
 Model.DEFAULT_WPM = 200
@@ -530,10 +530,10 @@ function Model.wordsPerMinute(settings)
 end
 
 --- Adds the timed pages of one reading to the speed totals in `settings`.
--- records: { page, duration, total_pages, capped } (rssreader_reading_stats);
--- `words` = words of the article. The last page (usually not full) and pages
--- cut at the statistics' max_sec (the reader paused) are left out. Returns true
--- when something was added.
+-- records: { page, duration, total_pages, capped } (rssreader_reading_stats).
+-- `words` = words of the article. This skips the last page (usually not full) and
+-- pages cut at the statistics' max_sec (the reader paused). Returns true
+-- when it added something.
 function Model.addReadingSpeed(settings, records, words)
     local added_words, added_seconds = 0, 0
     for _, record in ipairs(records or {}) do
@@ -555,7 +555,7 @@ function Model.addReadingSpeed(settings, records, words)
     return true
 end
 
---- Minutes at `wpm` words per minute (default DEFAULT_WPM), at least 1; nil without text.
+--- Minutes at `wpm` words per minute (default DEFAULT_WPM), at least 1, nil without text.
 function Model.readingMinutes(html, wpm)
     local words = Model.wordCount(html)
     if words == 0 then
@@ -661,7 +661,7 @@ function Model.readerHead(article, parts)
     return table.concat(html, "\n")
 end
 
---- Index of the neighbour in direction `step` (+1 / -1), nil at the ends.
+--- Index of the neighbor in direction `step` (+1 / -1), nil at the ends.
 function Model.neighbor(list, index, step)
     local target = index + step
     if target < 1 or target > #list then
@@ -670,7 +670,7 @@ function Model.neighbor(list, index, step)
     return target
 end
 
---- Next unread article after `index`, wrapping around; nil when none is left.
+--- Next unread article after `index` (wraps at the end), nil when none is left.
 function Model.nextUnread(list, index)
     local count = #list
     for offset = 1, count - 1 do
@@ -684,7 +684,7 @@ end
 
 -- End of an article (both reader modes) -------------------------------------------
 -- One list of actions for the quick reader's end bar and the KOReader reader's
--- end dialog; each mode maps the ids to its own callbacks. A new action = one
+-- end dialog. Each mode maps the ids to its own callbacks. A new action = one
 -- entry here + one handler per mode.
 
 -- Shown in rows of three, laid out like the footer: Previous left, Next right,
@@ -728,7 +728,7 @@ function Model.endActions(list, index)
 end
 
 -- Quick reader input (spec 8.4 table) ------------------------------------------------
--- Gesture/key -> action id; Model.readerAction resolves it against the reader state.
+-- Gesture/key -> action id. Model.readerAction resolves it against the reader state.
 
 Model.READER_INPUT = {
     tap_forward = "next_page",     -- tap on the right half of the text
@@ -740,7 +740,7 @@ Model.READER_INPUT = {
     swipe_west = "next_article",
     swipe_east = "prev_article",
     key_back = "close",
-    button_back = "close",           -- footer buttons go through the same dispatcher
+    button_back = "close",           -- footer buttons use the same dispatcher
     button_backward = "prev_page",
     button_forward = "next_page",
 }
@@ -751,9 +751,9 @@ function Model.readerAtEnd(state)
     return state.page >= state.pages
 end
 
---- Action id for an input in state { page, pages }: forward on the last page (end
--- bar visible) = next unread; back on the last page turns to the previous page
--- (the footer comes back); back on the first page does nothing. nil for unknown
+--- Action id for an input in state { page, pages }. Forward on the last page (end
+-- bar visible) = next unread. Back on the last page turns to the previous page
+-- (the footer shows again). Back on the first page does nothing. nil for unknown
 -- inputs and for "nothing to do".
 function Model.readerAction(input, state)
     local action = Model.READER_INPUT[input]
@@ -771,7 +771,7 @@ end
 -- jumps to a page) and one line of information that changes on tap (Kindle style).
 -- Never shown on the last page (end bar, see readerAtEnd).
 
---- Buttons of the footer; glyph: Chrome.GLYPH key. state { page, pages }.
+--- Buttons of the footer (glyph: Chrome.GLYPH key). state { page, pages }.
 function Model.readerFooter(state)
     return {
         { input = "button_back", glyph = "back", text = _("Back"), enabled = true },
@@ -802,8 +802,8 @@ function Model.nextFooterInfo(mode)
     end
 end
 
---- Minutes left from the start of page `page` (state { page, pages }), at least 1;
--- `minutes` = reading time of the whole article (may be a fraction).
+--- Minutes left from the start of page `page` (state { page, pages }), at least 1.
+-- `minutes` = reading time of the whole article (can be a fraction).
 function Model.minutesLeft(state, minutes)
     if not minutes then
         return nil
@@ -843,7 +843,7 @@ end
 -- The share of the article before the page shown, so it survives a new page
 -- count (font, size, margin, other device).
 
---- Position to store for state { page, pages }; nil on the first page (= from the top).
+--- Position to store for state { page, pages }, nil on the first page (= from the top).
 function Model.readPosition(state)
     if state.page <= 1 or state.pages <= 1 then
         return nil
@@ -851,7 +851,7 @@ function Model.readPosition(state)
     return (state.page - 1) / state.pages
 end
 
---- Page to open for a stored position; 1 without one.
+--- Page to open for a stored position, 1 without one.
 function Model.pageForPosition(position, pages)
     position = tonumber(position)
     pages = math.max(1, pages)
@@ -874,7 +874,7 @@ end
 
 -- Typography (e-ink, spec 8.1): hierarchy by size and weight. MIN_FONT_SIZE is
 -- the smallest face size (Font:getFace units, scaled by the device) used for
--- anything the user reads; KOReader's own small text is about that size.
+-- anything the user reads. KOReader's own small text is about that size.
 Model.MIN_FONT_SIZE = 16
 Model.MAX_CARD_FONT_SIZE = 28
 
@@ -885,7 +885,7 @@ function Model.cardFontSizes(font_size)
 end
 
 -- Contrast (e-ink, spec 8.1) -------------------------------------------------------
--- Text colours are 8-bit grays (KOReader Blitbuffer.Color8 values, see
+-- Text colors are 8-bit grays (KOReader Blitbuffer.Color8 values, see
 -- ffi/blitbuffer.lua: COLOR_DARK_GRAY = 0x88, COLOR_GRAY_5 = 0x55, ...).
 -- E-ink has less contrast than a screen: normal text needs WCAG AAA 7:1,
 -- large or bold text 4.5:1.
@@ -907,9 +907,9 @@ function Model.contrastRatio(fg_gray, bg_gray)
     return (light + 0.05) / (dark + 0.05)
 end
 
---- The colours of the card reader UI (rssreader_ui_chrome.COLOR builds the
--- Blitbuffer colours from these). `text` entries colour text and must reach
--- CONTRAST_NORMAL (CONTRAST_LARGE with large = true) against `bg`; a spec
+--- The colors of the card reader UI (rssreader_ui_chrome.COLOR builds the
+-- Blitbuffer colors from these). `text` entries color text and must reach
+-- CONTRAST_NORMAL (CONTRAST_LARGE with large = true) against `bg`. A spec
 -- checks them. The others never carry text.
 Model.PALETTE = {
     text = { fg = 0x00, bg = 0xFF, text = true },          -- black on white: 21:1
@@ -942,7 +942,7 @@ Model.SETTINGS_DEFAULTS = {
     unread_only = false,
     og_image = true,           -- "Fetch preview image from article page"
     download_workers = 4,      -- "Parallel downloads" (1-8 forked workers, images and page lookups)
-    active_account = nil,      -- key of the home account; nil = first account
+    active_account = nil,      -- key of the home account, nil = first account
     reader_font_file = "",
     reader_font_size = 20,
     reader_line_spacing = 15,  -- x10
@@ -1077,11 +1077,11 @@ function Model.ownWindow(widget)
     return tostring(widget.name or ""):match("^rssreader") ~= nil or not widget.covers_fullscreen
 end
 
---- New window stack (bottom first; entries { x, y, widget } of UIManager) with the
+--- New window stack (bottom first, entries { x, y, widget } of UIManager) with the
 -- reader's windows on top again. SimpleUI ("Start with Home Screen") shows its
 -- home screen over them on wakeup, and opening the reader from there would start
 -- a second one. The reader's windows are `page` and the windows above it for
--- which owned(widget) is true; they keep their order, toasts and modal windows
+-- which owned(widget) is true. They keep their order, and toasts and modal windows
 -- stay on top. nil: `page` is not shown, or no foreign full-screen window lies
 -- above the reader's windows (nothing to do).
 function Model.raiseWindows(stack, page, owned)

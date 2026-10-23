@@ -11,20 +11,20 @@ Reader:new{ ctx, articles, index, on_close(index) } shows articles[index]
 saveSettings(settings), loadArticle(record), setStatus(article, action),
 saveEpub, removeArticle, imageDir(article), listFiles(dir), fileExists(path).
 
-Input: every gesture and key of the text area goes through one dispatcher
+Input: every gesture and key of the text area passes through one dispatcher
 (Reader:dispatch): Model.READER_INPUT maps it to an action id, Model.readerAction
 resolves it against the page, ACTIONS runs it. Links, images and the title are
 taps on their own widgets and never turn a page. The footer (Chrome.ReaderFooter)
 has the buttons Back / page back / page forward and a status line: one information
 (tap: the next one, Model.READER_FOOTER_INFO, Kindle style) on a background that
-fills with the progress. Dragging or swiping on the line jumps to a page; while the
-finger drags (and hides the line) a card above it shows where the jump goes. There is no scroll bar at the side. An article opens where it was
-left (stored per article, Model.readPosition); an unread one opens at the top. The last page shows the end bar in place of the footer
-(Model.readerAtEnd; Model.endActions, the same actions as the KOReader reader's end
-dialog); the page leaves room for it (Article.content end_space), so it never hides
-text. Long press selects text: one word goes to the dictionary, several words offer
-Dictionary / Wikipedia. The time on each page goes into KOReader's reading statistics
-when the article is closed (rssreader_reading_stats).
+fills with the progress. A drag or swipe on the line jumps to a page. While the finger drags
+(and hides the line), a card above it shows where the jump goes. There is no scroll bar at the
+side. An article opens at its stored place (per article, Model.readPosition). An unread article
+opens at the top. The last page shows the end bar in place of the footer (Model.readerAtEnd,
+Model.endActions: the same actions as the end dialog of the KOReader reader). The page keeps
+room for the bar (Article.content end_space), so the bar never hides text. A long press selects
+text: one word goes to the dictionary, several words offer Dictionary / Wikipedia. When the
+article closes, the time on each page goes into KOReader's reading statistics (rssreader_reading_stats).
 ]]
 
 local BottomContainer = require("ui/widget/container/bottomcontainer")
@@ -87,7 +87,7 @@ local ACTIONS = {
     next_unread = function(self) self:nextUnread() end,
 }
 
--- End action id (Model.endActions) -> handler; navigation goes through Model.endTarget.
+-- End action id (Model.endActions) -> handler. Navigation uses Model.endTarget.
 local END_HANDLERS = {
     star = function(self)
         self:setStatus(self.article.is_starred and "unstar" or "star")
@@ -139,8 +139,8 @@ function Reader:init()
         GestureRange:new{ ges = "tap", range = Geom:new{ x = icon_w, y = 0, w = m.width - 2 * icon_w, h = title_h } },
     }
 
-    -- Footer (spec 8.4): progress bar and one information line; its height does not
-    -- depend on the page count, so the text area is sized before the pages are known.
+    -- Footer (spec 8.4): progress bar and one information line. Its height does not
+    -- depend on the page count, so the text area gets its size before the pages are known.
     -- The end bar covers the footer and the bottom of the text area: the page keeps
     -- that part (end_space) free after the text. The top margin (setting) is a gap
     -- between the title bar and the text on every page.
@@ -164,7 +164,7 @@ function Reader:init()
     local text_area = function() return self.scroll.dimen end
     self.ges_events.ReaderTap = { GestureRange:new{ ges = "tap", range = text_area } }
     -- Text selection (like DictQuickLookup): the HtmlBoxWidget below handles
-    -- these events; the release callback gets the selected text.
+    -- these events. The release callback gets the selected text.
     self.ges_events.HoldStartText = { GestureRange:new{ ges = "hold", range = text_area } }
     self.ges_events.HoldPanText = { GestureRange:new{ ges = "hold_pan", range = text_area, rate = 30 } }
     self.ges_events.HoldReleaseText = {
@@ -192,10 +192,10 @@ function Reader:endSpace()
     return math.max(0, self:endPanel():getSize().h - self:footerHeight())
 end
 
---- The article page; paragraphs become keep rows for this page size (Article.content
--- layout). MuPDF lays out in pt at zoom 1, so pixels go in unscaled; the font size is
--- scaled like in Article.css, the text width is the content width of Article.css
--- (margins 1.25em on both sides; there is no scroll bar).
+--- The article page. Paragraphs become keep rows for this page size (Article.content
+-- layout). MuPDF makes the layout in pt at zoom 1, so pixels go in unscaled. The font size
+-- uses the same scale as Article.css. The text width is the content width of Article.css
+-- (margins 1.25em on both sides, no scroll bar).
 function Reader:contentHtml()
     local settings = self.ctx.settings
     local font = Screen:scaleBySize(settings.reader_font_size)
@@ -224,12 +224,12 @@ function Reader:scrollWidget()
         end,
     }
     -- Paging is ours (Reader:dispatch): the widget must not consume taps,
-    -- swipes or page keys itself (at the edges it would let them through anyway).
+    -- swipes or page keys itself (at the edges it would not stop them anyway).
     scroll.ges_events = {}
     scroll.key_events = {}
     -- A page without text (only the end spacer, see Article.content) has nothing
     -- to select, and KOReader's HtmlBoxWidget fails on a long press there (it
-    -- takes line 1 of an empty page): the press goes on to the reader instead.
+    -- takes line 1 of an empty page). The reader gets the press instead.
     local box = scroll.htmlbox_widget
     local hold_start, has_text = box.onHoldStartText, {}
     box.onHoldStartText = function(widget, arg, ges)
@@ -275,7 +275,7 @@ function Reader:pageState()
 end
 
 --- The one dispatcher of the text area: input name -> action (Model.readerAction).
--- A known input with nothing to do (back on the first page) is still consumed.
+-- The dispatcher also consumes a known input with nothing to do (back on the first page).
 function Reader:dispatch(input)
     if not Model.READER_INPUT[input] then
         return false
@@ -325,11 +325,11 @@ function Reader:footerWidget()
     }
 end
 
---- While the finger drags on the status line: the line fills up to the finger, a
+--- While the finger drags on the status line: the line fills up to the finger, and a
 -- card above the footer shows the page it would jump to (the finger hides the
--- line). The card takes the end bar's place over the text (the end bar is never
--- shown together with the footer); showPage removes it. E-ink: the card is drawn
--- whole once; after that only the status line and the card's text are refreshed,
+-- line). The card takes the end bar's place over the text (the reader never shows the
+-- end bar together with the footer). showPage removes it. E-ink: this draws the whole
+-- card once. After that, only the status line and the card's text get a refresh,
 -- and only when the target page changes (pan events come many times a second).
 function Reader:showSeekCard(ratio)
     local m = Chrome.metrics()
@@ -382,10 +382,10 @@ function Reader:turnPage(direction)
     self:showPage(self:pageState().page + direction)
 end
 
---- Shows page `page` (clamped); the footer follows the page, the last page shows
--- the end bar. The whole screen is refreshed, the title bar too, like a page
--- turn in KOReader's reader: on a Kindle the system status bar (clock, Wi-Fi)
--- can draw into the framebuffer over the title bar, and a refresh of the text
+--- Shows page `page` (clamped). The footer follows the page, and the last page shows
+-- the end bar. This refreshes the whole screen, also the title bar, like a page
+-- turn in KOReader's reader. On a Kindle the system status bar (clock, Wi-Fi)
+-- can draw into the framebuffer over the title bar. A refresh of the text
 -- area alone would leave it there.
 --- Sets the page of the text area (clamped), without any redraw.
 function Reader:jumpTo(page)
@@ -416,7 +416,7 @@ function Reader:trackPage()
     end
 end
 
--- Wi-Fi came up (KOReader broadcasts it): redraw the title bar only.
+-- Wi-Fi connected (KOReader broadcasts it): redraw the title bar only.
 function Reader:onNetworkConnected()
     Chrome.repaintTop(self, self.title_h)
     return false
@@ -435,8 +435,8 @@ function Reader:onResume()
 end
 
 --- Closed in any way (Back, next article, removed): the reading goes into the
--- statistics and the reading speed, the place into the article (none when the
--- article was marked unread meanwhile: the next reading starts at the top).
+-- statistics and the reading speed, and the place goes into the article. No place
+-- when the article was marked unread meanwhile: the next reading starts at the top).
 function Reader:onCloseWidget()
     if not self.stats then
         return
@@ -462,7 +462,7 @@ function Reader:endPanel()
     }
 end
 
---- Footer or end bar below the text (no redraw; callers mark what changed). The
+--- Footer or end bar below the text (no redraw, the callers mark what changed). The
 -- end bar takes the footer's place: its actions would repeat the footer buttons.
 function Reader:setEndBar(shown)
     self.end_bar = shown or nil
@@ -485,7 +485,7 @@ function Reader:onEndAction(id)
     end
 end
 
---- Star / read toggles from the end bar; the bar shows the new labels.
+--- Star / read toggles from the end bar. The bar shows the new labels.
 function Reader:setStatus(action)
     self.ctx.setStatus(self.article, action)
     local record = self.articles[self.index]
@@ -522,8 +522,8 @@ end
 
 -- Long press: dictionary / Wikipedia -------------------------------------------------------
 
--- Hold on a link or image keeps the tap action; there is no text to select on
--- an image, so the HtmlBoxWidget lets the release through to us.
+-- Hold on a link or image keeps the tap action. There is no text to select on
+-- an image, so the HtmlBoxWidget passes the release to us.
 function Reader:onHoldReleaseText(_, ges)
     local box = self.scroll.htmlbox_widget
     local pos = box:getPosFromAbsPos(ges.pos)
@@ -691,11 +691,11 @@ function Reader:showSettings()
             self:showSpin(_("Top margin"), "reader_margin_top", 0, Model.MAX_READER_MARGIN,
                 Model.SETTINGS_DEFAULTS.reader_margin_top)
         end),
-        -- Back / page back / page forward above the status line; off: more room for text.
+        -- Back / page back / page forward above the status line. Off: more room for text.
         row(string.format(_("Footer buttons: %s"), settings.reader_footer_buttons and _("on") or _("off")), function()
             self:changeSetting("reader_footer_buttons", not settings.reader_footer_buttons)
         end),
-        -- Takes effect with the next article that is opened.
+        -- Takes effect with the next article that opens.
         row(SettingsUI.readerModeRow(settings), function()
             SettingsUI.chooseReaderMode(settings, function(mode)
                 settings.reader_mode = mode

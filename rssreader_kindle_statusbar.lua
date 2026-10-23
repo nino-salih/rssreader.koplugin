@@ -1,15 +1,15 @@
 --[[--
 The Kindle's own status bar (clock, Wi-Fi) over the card reader.
 
-The bar is drawn by the Kindle framework (pillow, window manager "awesome"), not
-by KOReader. koreader.sh hides it at start (FW >= 5.6.5: pillow disabled, the
-environment says PILLOW_HARD_DISABLED=yes; FW >= 5.7.2 also stops awesome), but a
-Wi-Fi change can bring it back over the top of the screen. The plugin does not
-stop the window manager itself (a crash would leave the Kindle UI frozen); it:
+The Kindle framework draws the bar (pillow, window manager "awesome"), not KOReader.
+koreader.sh hides it at start. On FW >= 5.6.5 it disables pillow (the environment
+says PILLOW_HARD_DISABLED=yes). On FW >= 5.7.2 it also stops awesome. But a Wi-Fi
+change can show the bar again over the top of the screen. The plugin does not stop
+the window manager itself, because a crash would freeze the Kindle UI. The plugin:
 
-  * hides pillow again after Wi-Fi came up, only when koreader.sh had hidden it
-    (StatusBar.restore: it returns to KOReader's own state, nothing new);
-  * redraws the header area of its pages afterwards (the callers);
+  * hides pillow again after Wi-Fi connects, only when koreader.sh had hidden it
+    (StatusBar.restore: it returns to KOReader's own state and adds nothing new).
+  * redraws the header area of its pages after that (the callers).
   * logs once what koreader.sh did (StatusBar.logState), for a look at the device.
 
 Nothing happens on other devices.
@@ -31,7 +31,7 @@ local function run(command)
     return output
 end
 
---- Pure: what to do after Wi-Fi came up, from koreader.sh's environment
+--- Pure: what to do after Wi-Fi connects, from koreader.sh's environment
 -- (getenv(name) -> value): "hard" (pillow disabled), "soft" (status bar hidden) or nil.
 function StatusBar.mode(getenv)
     if getenv("PILLOW_HARD_DISABLED") == "yes" then
@@ -47,7 +47,7 @@ StatusBar.COMMANDS = {
     soft = [[lipc-set-prop com.lab126.pillow interrogatePillow '{"pillowId": "default_status_bar", "function": "nativeBridge.hideMe();"}']],
 }
 
---- After Wi-Fi came up: hides the status bar again as koreader.sh did at start.
+--- After Wi-Fi connects: hides the status bar again as koreader.sh did at start.
 function StatusBar.restore()
     if not Device:isKindle() then
         return

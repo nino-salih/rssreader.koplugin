@@ -3,10 +3,10 @@ Tree view and navigation of the offline card reader (spec 2026-10-08, 8.1/8.2/8.
 
 Tree.open(plugin, opts) shows one full-screen Chrome.Page and renders the top of
 a navigation stack into it. Home is the active account (folders > feeds > card
-list; the reader opens on top); with several accounts its last row "All
-accounts" opens the overview, where tapping an account makes it the active
-account and the new home. Back pops the stack, at home it closes the view. All data comes from rssreader_store; the row and query
-logic is pure (rssreader_ui_model).
+list, and the reader opens on top). With several accounts, the last row "All
+accounts" opens the overview. A tap on an account there makes it the active account
+and the new home. Back pops the stack. At home, Back closes the view. All data
+comes from rssreader_store. The row and query logic is pure (rssreader_ui_model).
 ]]
 
 local ButtonDialog = require("ui/widget/buttondialog")
@@ -63,7 +63,7 @@ function Row:init()
     self.dimen = Geom:new{ x = 0, y = 0, w = self.width, h = self.height }
     self.ges_events.Tap = { GestureRange:new{ ges = "tap", range = self.dimen } }
     -- One scheme on every level (Model emphasize): bold = has unread articles,
-    -- italic = opens another level; counters bold, same size; black on white.
+    -- italic = opens another level. Counters: bold, same size. Black on white.
     local pad = Screen:scaleBySize(14)
     local face = Font:getFace(ROW_FONTS[(self.row.bold and "b" or "") .. (self.row.italic and "i" or "")], 20)
     local count = TextWidget:new{ text = self.row.count and tostring(self.row.count) or "",
@@ -131,8 +131,8 @@ end
 
 -- Status changes ------------------------------------------------------------------------
 
--- Sends the queue in the background when Wi-Fi is already on (never turns it on).
--- The UI path only asks the cheap isConnected(); the blocking isOnline() (DNS
+-- Sends the queue in the background when Wi-Fi is already on (never enables Wi-Fi).
+-- The UI path only asks the cheap isConnected(). The blocking isOnline() (DNS
 -- lookup) runs inside Sync.flushQueue, once, in the scheduled closure.
 local function scheduleFlush(app, key)
     local account = accountByKey(app, key)
@@ -153,7 +153,7 @@ local function scheduleFlush(app, key)
     UIManager:scheduleIn(2, app.flush[key])
 end
 
--- A running sync sends the queue itself; pending background flushes would only interleave.
+-- A running sync sends the queue itself. Pending background flushes would only interleave.
 local function cancelFlushes(app)
     for key, fn in pairs(app.flush or {}) do
         UIManager:unschedule(fn)
@@ -199,8 +199,8 @@ end
 
 -- Before the reader shows an article (rssreader_readers, spec 2026-10-13, 6): with
 -- Wi-Fi on, a missing text and missing images (planned with the reader settings,
--- one try per article and session) load first. An article without a stored row
--- (cache mode placeholder) that cannot load is not opened.
+-- one try per article and session) load first. The reader does not open an article
+-- without a stored row (cache mode placeholder) that cannot load.
 local function prepareArticle(app, record, done)
     local article = Store.getArticle(app.db, record.account, record.id)
     local account = accountByKey(app, record.account)
@@ -228,8 +228,8 @@ local function prepareArticle(app, record, done)
         local names = fs.list(Images.articleDir(root, item.account, item.id)) or {}
         return #EpubOffline.missingImages(item, names, { plan = plan, proxy = proxy }) > 0
     end
-    -- A row without text (cache limit, or the server has none) is asked for once
-    -- per session; an article without a row always (it cannot open otherwise).
+    -- A row without text (cache limit, or the server has none): one request per
+    -- session. An article without a row: always (it cannot open otherwise).
     app.prepared_text = app.prepared_text or {}
     local needs_text = not article or (not article.content_html and not app.prepared_text[tried_key])
     if not needs_text and not imagesMissing(article, nil) then
@@ -270,9 +270,9 @@ local function prepareArticle(app, record, done)
 end
 
 -- "Reload article(s)": the stored articles fresh from the server (version 2 after
--- the feed was fixed in FreshRSS; the API has no change date, spec 2026-10-13).
--- Accounts without fetchByIds (local feeds) are left out. Images of the new text
--- load when an article is opened. `done(count)` afterwards.
+-- a fix of the feed in FreshRSS, the API has no change date, spec 2026-10-13).
+-- This skips accounts without fetchByIds (local feeds). Images of the new text
+-- load when an article opens. Then calls `done(count)`.
 local function reloadArticles(app, articles, done)
     local by_account, order = {}, {}
     for _, article in ipairs(articles) do
@@ -307,7 +307,7 @@ local function reloadArticles(app, articles, done)
                         break
                     end
                 end
-                -- The new text may have new images: asked for again.
+                -- The new text can have new images: ask for them again.
                 for _, id in ipairs(group.ids) do
                     local tried_key = key .. "\0" .. id
                     if app.prepared then
@@ -360,7 +360,7 @@ local function makeContext(app)
         imageDir = function(article) return Images.articleDir(root, article.account, article.id) end,
         listFiles = function(dir) return fs.list(dir) or {} end,
         fileExists = function(path) return lfs.attributes(path, "mode") == "file" end,
-        -- The KOReader reader replaces the card page; on_close shows it again.
+        -- The KOReader reader replaces the card page. on_close shows it again.
         hideCards = function() UIManager:close(app.page) end,
     }
 end
@@ -400,7 +400,7 @@ end
 
 -- Cache mode list from the server's id list (spec 2026-10-13, section 5): app.live =
 -- { location, account, ids (newest first), covered (ids of the load sequence
--- whose block is loaded), images (ids whose images were asked for) }; it belongs
+-- whose block is loaded), images (ids whose images were requested) }. It belongs
 -- to one open list.
 local function liveOf(app, location)
     local live = app.live
@@ -439,12 +439,12 @@ local function liveFeedIds(app, location)
 end
 
 -- Seconds between two header redraws while a sync runs (the Kindle's status bar
--- can draw over the header while Wi-Fi is busy; only that strip is redrawn).
+-- can draw over the header while Wi-Fi is busy. Only that strip gets a redraw).
 local HEADER_REPAINT_SECONDS = 5
 
 -- Progress callback for Trapper:info: at most one repaint per second and stage
--- (every repaint costs time and a flash on e-ink); false = the user dismissed it.
--- With `page`, its header is redrawn every HEADER_REPAINT_SECONDS as well.
+-- (every repaint costs time and a flash on e-ink). Returns false when the user dismissed it.
+-- With `page`, it also redraws the page header every HEADER_REPAINT_SECONDS.
 trapperProgress = function(page)
     local last_stage, last_time, last_header = nil, nil, os.time()
     return function(event)
@@ -490,7 +490,7 @@ end
 -- Live loading (mode "cache only") ----------------------------------------------------------------
 
 -- The account of a list that loads through the id list: one account, not the
--- local one; "Starred" also shows the classic List and stays as before.
+-- local one. "Starred" also shows the classic List and stays as before.
 local function liveAccount(app, location)
     if location.special == "starred" or not location.account or Store.isLocalAccount(location.account) then
         return nil
@@ -500,7 +500,7 @@ end
 
 -- Inside Trapper: loads blocks along the load sequence until page `page` holds no
 -- placeholder, then the images of its cards (spec 2026-10-13, 5.3). A failed or
--- cancelled block does not count as loaded. Leaves the list in app.articles.
+-- canceled block does not count as loaded. Leaves the list in app.articles.
 local function loadLivePage(app, live, location, page, on_progress)
     local ordered = LiveList.order(live.ids, location.sort_desc)
     local per_page = cardsPerPage(app)
@@ -537,14 +537,14 @@ local function loadLivePage(app, live, location, page, on_progress)
     end
     if #wanted > 0 then
         Sync.loadImagesFor(sync_deps, live.account.config, wanted, Model.syncSettings(app.settings), on_progress)
-        -- The image step writes thumb_path into the store only: the cards are built
-        -- from fresh rows, or the page shows its placeholders until it is opened again.
+        -- The image step writes thumb_path into the store only: the cards come from fresh
+        -- rows, or the page shows its placeholders until it opens again.
         app.articles = loadArticles(app, location)
     end
 end
 
--- A list with an id list: the current page loaded inside Trapper (blocks,
--- images), then `done`. Without an id list: `done` at once; offline the list
+-- A list with an id list: loads the current page inside Trapper (blocks,
+-- images), then calls `done`. Without an id list: `done` at once. Offline, the list
 -- drops its id list and shows the stored rows as before.
 local function showLivePage(app, done)
     local location = top(app)
@@ -569,8 +569,8 @@ end
 
 -- Mode "cache only": loads the list live inside Trapper (progress, cancel), then
 -- calls `done`. A list of an account with id lists gets its whole id list and the
--- blocks of the current page (spec 2026-10-13, 5.1); other lists load the newest
--- articles as before. Without a connection the cached rows are shown at once.
+-- blocks of the current page (spec 2026-10-13, 5.1). Other lists load the newest
+-- articles as before. Without a connection, the list shows the cached rows at once.
 local function refreshLive(app, location, done)
     app.live = nil
     if app.settings.mode ~= "cache_only" or not NetworkMgr:isConnected() then
@@ -733,8 +733,8 @@ local function close(app)
 end
 
 local function runSync(app)
-    -- runWhenConnected always calls back (runWhenOnline drops the callback when
-    -- Wi-Fi is up but DNS fails); Sync.run itself reports an unreachable server.
+    -- runWhenConnected always calls the callback (runWhenOnline drops the callback when
+    -- Wi-Fi is up but DNS fails). Sync.run itself reports an unreachable server.
     NetworkMgr:runWhenConnected(function()
         cancelFlushes(app)
         Chrome.repaintTop(app.page, app.page:headerHeight())
@@ -756,7 +756,7 @@ local function runSync(app)
                 end
             end
             local ok, summary = pcall(Sync.run, deps(app), configs, sync_settings, trapperProgress(app.page))
-            -- The progress message is closed (and painted) before the summary shows.
+            -- Close (and paint) the progress message before the summary shows.
             Trapper:clear()
             if not ok then
                 logger.warn("RSSReader: sync failed", summary)
@@ -769,7 +769,7 @@ local function runSync(app)
             end
             local text = Model.syncSummaryText(summary)
             logger.info("RSSReader sync:", text)
-            -- Failures stay until tapped away; "all up to date" goes by itself.
+            -- Failures stay until a tap closes them. "all up to date" closes by itself.
             local clean = summary.feeds_failed == 0 and #summary.auth_failed == 0 and not summary.disk_full
                 and not summary.interrupted and not summary.cache_full
             app.articles = nil
@@ -813,8 +813,8 @@ local function markAllRead(app)
         confirmMarkRead(app, articles)
         return
     end
-    -- List with an id list: every unread id on the server counts, loaded or not;
-    -- ids without a row only get their queue entry (spec 2026-10-13, 5.6).
+    -- List with an id list: every unread id on the server counts, loaded or not.
+    -- Ids without a row only get their queue entry (spec 2026-10-13, 5.6).
     Trapper:wrap(function()
         local ok, result = pcall(Sync.listIds, deps(app), live.account.config, liveFeedIds(app, location),
             { unread_only = true })
@@ -834,7 +834,7 @@ local function markAllRead(app)
         end
         confirmMarkRead(app, articles, function()
             if ok and result.ids and liveOf(app, location) then
-                -- An unread list is empty now; its placeholders go as well.
+                -- An unread list is empty now. Its placeholders go as well.
                 local _, list_query = Model.listQuery(location, app.settings.unread_only, todayStart())
                 if list_query.unread_only then
                     live.ids, live.covered = {}, 0
@@ -960,13 +960,13 @@ end
 
 -- Opening ----------------------------------------------------------------------------------------
 
--- The open tree view (weak: a closed page goes away with its app).
+-- The open tree view (weak: the garbage collector frees a closed page with its app).
 local running = setmetatable({}, { __mode = "v" })
 
 -- Puts the reader's windows on top of the window stack again (Model.raiseWindows)
 -- and repaints them. The tap settings follow the new top window, like UIManager:show.
--- Repaint "all": UIManager paints from the top full-screen window up, a dirty page
--- under the reader would not be painted at all.
+-- Repaint "all": UIManager paints from the top full-screen window upward, so it
+-- would not paint a dirty page under the reader at all.
 local function raise(app, owned)
     local stack = UIManager._window_stack
     local order = Model.raiseWindows(stack, app.page, owned)
@@ -1112,7 +1112,7 @@ function Tree.open(plugin, opts)
         app.articles = nil
         local live = liveOf(app, location)
         if live then
-            -- The load sequence turns round: its first blocks are loaded (5.4).
+            -- The load sequence reverses: its first blocks load (5.4).
             live.covered = 0
             renderPage()
             return
@@ -1122,7 +1122,7 @@ function Tree.open(plugin, opts)
     page.on_sync = function() runSync(app) end
     -- Wakeup: SimpleUI ("Start with Home Screen") shows its home screen over the
     -- reader on the next tick. After that, the windows that were open before the
-    -- wakeup go back on top.
+    -- wakeup return to the top.
     page.onResume = function()
         local before = {}
         for _, window in ipairs(UIManager._window_stack) do

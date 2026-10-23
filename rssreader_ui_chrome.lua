@@ -8,9 +8,9 @@ page:update{ segments, unread_only, sort_desc, show_sort, sync_label, body, page
 Callbacks (fields of Page): on_menu, on_jump(index), on_toggle_unread, on_toggle_sort,
 on_sync, on_back, on_prev, on_next.
 
-E-ink rules (spec 8.1): text only in the colours of Chrome.COLOR (built from
-rssreader_ui_model.PALETTE, contrast checked by a spec), hierarchy by size and
-weight; one dialog at a time (Chrome.replaceDialog).
+E-ink rules (spec 8.1): text only in the colors of Chrome.COLOR (built from
+rssreader_ui_model.PALETTE, a spec checks the contrast), hierarchy by size and
+weight, one dialog at a time (Chrome.replaceDialog).
 ]]
 
 local Blitbuffer = require("ffi/blitbuffer")
@@ -54,7 +54,7 @@ Chrome.GLYPH = {
     star = "\u{2605}",          -- ★
 }
 
---- Blitbuffer colours of the palette (Model.PALETTE: text, muted, inverted,
+--- Blitbuffer colors of the palette (Model.PALETTE: text, muted, inverted,
 -- background, border, rule, image_bg). Text uses only these.
 Chrome.COLOR = {}
 for name, entry in pairs(Model.PALETTE) do
@@ -63,9 +63,9 @@ end
 local COLOR = Chrome.COLOR
 
 --- Closes `old` (nil when the dialog closes itself, e.g. ConfirmBox after its
--- ok_callback) and runs `show_fn` (shows the next dialog) two UI ticks later,
--- so the close is painted first: on e-ink the old dialog must not stay visible
--- under the new one.
+-- ok_callback). Then runs `show_fn` (shows the next dialog) two UI ticks later,
+-- so that the UI paints the close first. On e-ink the old dialog must not stay
+-- visible under the new one.
 function Chrome.replaceDialog(old, show_fn)
     if old then
         UIManager:close(old, "ui")
@@ -73,10 +73,10 @@ function Chrome.replaceDialog(old, show_fn)
     UIManager:tickAfterNext(show_fn)
 end
 
---- Redraws only the top `height` pixels of `widget` (header or title bar): on a
+--- Redraws only the top `height` pixels of `widget` (header or title bar). On a
 -- Kindle the system status bar (clock, Wi-Fi) can draw over them, mostly when Wi-Fi
--- comes up. Hides that bar again first (rssreader_kindle_statusbar) and redraws
--- now and twice more, as the bar may come a moment later.
+-- connects. First hides that bar again (rssreader_kindle_statusbar). Then redraws
+-- now and two more times, because the bar can appear a moment later.
 function Chrome.repaintTop(widget, height)
     StatusBar.restore()
     local function refresh()
@@ -90,8 +90,8 @@ function Chrome.repaintTop(widget, height)
 end
 
 --- Once per KOReader run: when a window under the reader's windows asks for a
--- screen refresh, the reader's top window is painted again first, so the refresh
--- shows the reader and not the Kindle status bar (rssreader_ui_model.coveringWindow).
+-- screen refresh, this hook first paints the reader's top window again. The refresh
+-- then shows the reader and not the Kindle status bar (rssreader_ui_model.coveringWindow).
 local guarded = false
 function Chrome.guardCoveredRefresh()
     if guarded then
@@ -311,13 +311,13 @@ function StatusLine:paintTo(bb, x, y)
     self.label:paintTo(bb, x + math.floor((self.width - size.w) / 2), y + math.floor((self.height - size.h) / 2))
 end
 
---- Footer of the quick reader while reading: the three footer buttons (slots as
--- in Chrome.buttonRow; left out with buttons = false) and under them the status line: one information (tap: the
--- next one) on a background that fills with the progress. Dragging or swiping on
--- the line jumps to the page at the finger (its share of the width).
--- Fields: slots, ratio (0 .. 1), text, on_scrub(ratio) while the finger drags
--- (the finger hides the line: the reader shows where it goes), on_seek(ratio)
--- when it is lifted or after a swipe, on_info() on a tap.
+--- Footer of the quick reader while reading: the three footer buttons (slots as in
+-- Chrome.buttonRow, omitted with buttons = false) and under them the status line.
+-- The line shows one information (tap: the next one) on a background that fills
+-- with the progress. A drag or swipe on the line jumps to the page at the finger
+-- (its share of the width). Fields: slots, ratio (0 .. 1), text, on_scrub(ratio)
+-- while the finger drags (the finger hides the line: the reader shows where it goes),
+-- on_seek(ratio) when the finger lifts or after a swipe, on_info() on a tap.
 -- Its height never depends on the content (ReaderFooter.height()).
 local ReaderFooter = InputContainer:extend{
     buttons = true,
@@ -364,7 +364,7 @@ function ReaderFooter:ratioAt(x)
     return math.max(0, math.min(1, (x - self.dimen.x) / math.max(1, self.dimen.w)))
 end
 
---- The fill of the status line (while dragging: where the finger is); no redraw.
+--- The fill of the status line (while dragging: where the finger is). No redraw.
 function ReaderFooter:setFill(ratio)
     self.status.ratio = ratio
 end
@@ -434,7 +434,7 @@ end
 -- End of an article (spec 8.4) --------------------------------------------------------
 
 --- Panel with the end actions (Model.endActions) in rows of three framed
--- buttons under a title; on_action(id). Taps and holds on the panel never
+-- buttons under a title. Callback: on_action(id). Taps and holds on the panel never
 -- reach the text below it.
 local EndPanel = InputContainer:extend{
     actions = nil,
@@ -508,7 +508,7 @@ end
 
 Chrome.EndDialog = EndDialog
 
---- Rows of a page body with thin separators; `rows` are widgets of height `row_h`.
+--- Rows of a page body with thin separators. `rows` are widgets of height `row_h`.
 function Chrome.body(rows, width)
     local group = VerticalGroup:new{ align = "left" }
     for index, row in ipairs(rows) do
@@ -548,7 +548,7 @@ end
 
 --- Rebuilds the whole page. opts: segments, unread_only (nil = no toggle), show_sort,
 -- sort_desc, sync_label, body (widget), page, pages. ◀ ▶ and "3 / 12" only with
--- more than one page; Back always stays in the first slot.
+-- more than one page. Back always stays in the first slot.
 function Page:update(opts)
     local m = Chrome.metrics()
     local body = opts.body or VerticalGroup:new{}
@@ -577,7 +577,7 @@ function Page:headerHeight()
     return Chrome.metrics().header_h + Size.line.medium
 end
 
--- Wi-Fi came up (KOReader broadcasts it): redraw the header only; other windows get it too.
+-- Wi-Fi connected (KOReader broadcasts it): redraw the header only. Other windows get it too.
 function Page:onNetworkConnected()
     Chrome.repaintTop(self, self:headerHeight())
     return false

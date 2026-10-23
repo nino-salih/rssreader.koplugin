@@ -599,7 +599,7 @@ function RSSReader:onRSSReader()
     self:openOfflineReader()
 end
 
--- The card reader (tree > cards > reader); ≡ > Classic view opens openAccountList.
+-- The card reader (tree > cards > reader). ≡ > Classic view opens openAccountList.
 function RSSReader:openOfflineReader(opts)
     local ok, err = pcall(function()
         require("rssreader_ui_tree").open(self, opts)
@@ -622,8 +622,8 @@ function RSSReader:onReaderReady()
     end
 end
 
--- Card reader pages (KOReader reader mode) are opened by the plugin, not the
--- user: keep them out of KOReader's History and "last document".
+-- The plugin, not the user, opens card reader pages (KOReader reader mode):
+-- remove them from KOReader's History and "last document".
 function RSSReader:onCloseDocument()
     local file = self.ui and self.ui.document and self.ui.document.file
     local ok, Pages = pcall(require, "rssreader_pages")
