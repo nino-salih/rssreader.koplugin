@@ -1,0 +1,13 @@
+{"id":"feed/1","updated":1760000000,"items":[
+ {"id":"tag:google.com,2005:reader/item/0006400000000002","crawlTimeMsec":"1760000000000","timestampUsec":"1760000000000000","published":1760000000,
+  "title":"Chapter 12","canonical":[{"href":"https://void.example/12"}],"alternate":[{"href":"https://void.example/12"}],
+  "categories":["user/-/state/com.google/reading-list","user/-/label/novel","user/-/state/com.google/starred"],
+  "origin":{"streamId":"feed/1","htmlUrl":"https://void.example/","title":"Void Herald"},
+  "summary":{"content":"<p>The <b>void</b> answers.</p><img src=\"/img/12.jpg\">"},"author":"Ann",
+  "enclosure":[{"href":"https://cdn.example/banner12.jpg","type":"image/jpeg","length":1234}]},
+ {"id":"tag:google.com,2005:reader/item/0006400000000001","crawlTimeMsec":"1759990000000","timestampUsec":"1759990000000000","published":1759990000,
+  "title":"Chapter 11","canonical":[{"href":"https://void.example/11"}],"alternate":[{"href":"https://void.example/11"}],
+  "categories":["user/-/state/com.google/reading-list","user/-/label/novel"],
+  "origin":{"streamId":"feed/1","htmlUrl":"https://void.example/","title":"Void Herald"},
+  "summary":{"content":"<p>Before the void.</p><img src=\"https://void.example/img/11.png\">"},"author":"Ann"}
+],"continuation":"1759990000000000"}

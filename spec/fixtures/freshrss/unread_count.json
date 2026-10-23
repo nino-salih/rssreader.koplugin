@@ -1,0 +1,8 @@
+{"max":1000,"unreadcounts":[
+ {"id":"user/-/state/com.google/reading-list","count":7,"newestItemTimestampUsec":"1760000000000000"},
+ {"id":"user/-/label/novel","count":5,"newestItemTimestampUsec":"1760000000000000"},
+ {"id":"user/-/label/tech","count":0,"newestItemTimestampUsec":"1759000000000000"},
+ {"id":"feed/1","count":5,"newestItemTimestampUsec":"1760000000000000"},
+ {"id":"feed/2","count":0,"newestItemTimestampUsec":"1759000000000000"},
+ {"id":"feed/3","count":2,"newestItemTimestampUsec":"1759500000000000"}
+]}
