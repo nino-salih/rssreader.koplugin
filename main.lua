@@ -590,13 +590,24 @@ function RSSReader:addToMainMenu(menu_items)
         text = _("RSS Reader"),
         sorting_hint = "search",
         callback = function()
-            self:openAccountList()
+            self:openOfflineReader()
         end,
     }
 end
 
 function RSSReader:onRSSReader()
-    self:openAccountList()
+    self:openOfflineReader()
+end
+
+-- The card reader (tree > cards > reader); ≡ > Classic view opens openAccountList.
+function RSSReader:openOfflineReader(opts)
+    local ok, err = pcall(function()
+        require("rssreader_ui_tree").open(self, opts)
+    end)
+    if not ok then
+        logger.warn("RSSReader: offline reader failed, opening the classic view:", err)
+        self:openAccountList()
+    end
 end
 
 -- Only ever fires on the ReaderUI-side instance of the plugin; ReaderReturn
