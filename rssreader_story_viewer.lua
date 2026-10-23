@@ -726,7 +726,9 @@ function StoryViewer:_showStoryNow(story, on_action, on_close, options)
 
         local asset_paths = HtmlResources.prepareAssetPaths(temp_dir, string.format("preview_%d_%d", os.time(), nextTempCounter()))
         if asset_paths then
-            local rewritten, assets = HtmlResources.downloadAndRewrite(html, story_link, asset_paths)
+            local rewritten, assets = HtmlResources.downloadAndRewrite(html, story_link, asset_paths, {
+                proxy = options and options.image_proxy,
+            })
             if rewritten and rewritten ~= "" then
                 html = rewritten
             end

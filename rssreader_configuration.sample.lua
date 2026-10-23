@@ -122,4 +122,20 @@ return {
         image_download_workers = 4, -- how many images to download at the same time (1 = one after the other)
         sanitized_save_path = nil, -- path to save sanitized links, if nil uses default_folder_on_save, then home folder
     },
+    -- Optional image proxy for the offline card reader (imgproxy, https://imgproxy.net).
+    -- When set, every image of a sync is fetched as
+    --   <url>/unsafe/w:<width>/q:70/plain/<percent-encoded image URL>@jpg
+    -- so your server resizes it (screen width; card images 480 px) and sends a JPEG:
+    -- far smaller downloads, and AVIF/HEIC/WebP images work on the device.
+    -- The images keep their original URLs; article pages are still fetched directly.
+    -- Protect the proxy with a login (HTTP Basic Auth, e.g. in Traefik or nginx): it fetches any URL.
+    -- The login is only sent to this url. If the proxy fails during a sync, the rest of
+    -- that sync downloads directly. Remove the block (or set it to nil) to turn it off.
+    image_proxy = nil, -- example:
+    -- image_proxy = {
+    --     url = "https://img.example.org",
+    --     username = "proxy_user",
+    --     password = "proxy_password",
+    --     -- width = 1072, -- optional: width of article images (default: screen width)
+    -- },
 }

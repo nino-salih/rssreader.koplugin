@@ -174,6 +174,7 @@ function MenuBuilder:showStory(stories, index, on_action, on_close, options, con
         allow_mark_unread = allow_mark_unread,
         allow_star = allow_star,
         show_images_in_preview = show_images_in_preview,
+        image_proxy = show_images_in_preview and HtmlResources.deviceProxy(self.accounts) or nil,
     })
 end
 
@@ -2743,6 +2744,7 @@ function MenuBuilder:poolShowStoryPreview(stories, index)
         is_api_version = false,
         allow_mark_unread = true,
         show_images_in_preview = show_images_in_preview,
+        image_proxy = show_images_in_preview and HtmlResources.deviceProxy(self.accounts) or nil,
         is_pool = true,
         pool_index = index,
     })

@@ -1280,6 +1280,8 @@ function utils.fetchStoryContent(story, builder, on_complete, options)
                                 return yieldToUI(delay_s)
                             end or nil,
                             workers = utils.getImageDownloadWorkers(builder),
+                            -- Same image proxy as the sync (nil = direct).
+                            proxy = HtmlResources.deviceProxy(builder and builder.accounts),
                         })
                         if rewritten then
                             raw_html = rewritten
