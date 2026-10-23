@@ -611,6 +611,19 @@ function RSSReader:onReaderReady()
     end
 end
 
+-- Card reader pages (KOReader reader mode) are opened by the plugin, not the
+-- user: keep them out of KOReader's History and "last document".
+function RSSReader:onCloseDocument()
+    local file = self.ui and self.ui.document and self.ui.document.file
+    local ok, Pages = pcall(require, "rssreader_pages")
+    if ok and file and Pages.isPage(Pages.root(), file) then
+        local done, err = pcall(Pages.forgetHistory, file)
+        if not done then
+            logger.warn("RSSReader: removing the article from History failed:", err)
+        end
+    end
+end
+
 -- The floating button lays itself out against the current screen size on every
 -- paint, its tap zone does not: realign them after a rotation. Deliberately
 -- returns nothing, so the event keeps propagating to ReaderUI, whose own
