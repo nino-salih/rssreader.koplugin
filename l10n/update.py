@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
-"""Updates the plugin's translation files (rssreader_gettext.lua reads them).
+"""Update the translation files of the plugin (rssreader_gettext.lua reads them).
 
     python l10n/update.py
 
-1. Collects every _("...") text of the plugin's Lua files (not spec/) into
-   l10n/rssreader.pot, with the places it is used.
-2. Merges the template into every l10n/<language>/rssreader.po: existing
-   translations stay, new texts come in empty, texts no longer used are dropped.
-   English (the source language) gets the text itself as translation.
+1. Collect each _("...") text of the Lua files of the plugin (not spec/) into
+   l10n/rssreader.pot, with the places that use it.
+2. Merge the template into each l10n/<language>/rssreader.po. Existing
+   translations stay, new texts come in empty, and the script removes texts
+   that are no longer in use. English (the source language) gets the text
+   itself as its translation.
 
-A new language: create l10n/<code>/rssreader.po with a header (copy one) and run
-the script; then fill in the empty msgstr entries.
+To add a language, create l10n/<code>/rssreader.po with a header (copy one) and
+run the script. Then fill in the empty msgstr entries.
 """
 
 import glob
@@ -42,7 +43,7 @@ LUA_ESCAPES = {"n": "\n", "t": "\t", "r": "\r", "\\": "\\", '"': '"', "'": "'", 
 
 
 def lua_string(literal):
-    """Value of one Lua string literal."""
+    """Return the value of one Lua string literal."""
     if literal.startswith("["):
         level = literal.index("[", 1) + 1
         body = literal[level:-level]
@@ -80,7 +81,7 @@ def lua_files():
 
 
 def call_text(text, pos):
-    """The text of _( literal [.. literal]* ) starting after "_(" at pos, else None."""
+    """Return the text of _( literal [.. literal]* ) that starts after "_(" at pos, else None."""
     parts = []
     pos = SPACE.match(text, pos).end()
     while True:
@@ -98,7 +99,7 @@ def call_text(text, pos):
 
 
 def extract():
-    """msgid -> list of "file:line", in order of first use."""
+    """Return msgid -> list of "file:line", in the order of first use."""
     found = {}
     for rel, path in lua_files():
         with open(path, encoding="utf-8") as handle:
@@ -107,7 +108,7 @@ def extract():
             msgid = call_text(text, match.end())
             line = text.count("\n", 0, match.start()) + 1
             if msgid is None:
-                # A string pattern like "(_(%x+)" in Lua code is no call.
+                # A string pattern such as "(_(%x+)" in Lua code is not a call.
                 if LITERAL.match(text, SPACE.match(text, match.end()).end()):
                     print(f"warning: {rel}:{line}: _() with more than a text", file=sys.stderr)
                 continue
@@ -131,7 +132,7 @@ def po_unquote(lines):
 
 
 def read_po(path):
-    """msgid -> (msgstr, fuzzy) of an existing .po file."""
+    """Return msgid -> (msgstr, fuzzy) of an existing .po file."""
     entries = {}
     if not os.path.exists(path):
         return entries
