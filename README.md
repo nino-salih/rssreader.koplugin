@@ -1,5 +1,118 @@
 # RSS Reader Plugin
 
+This is a fork of [omer-faruq/rssreader.koplugin](https://github.com/omer-faruq/rssreader.koplugin). It adds an
+**offline card reader**: a sync loads your feeds into a local cache, and you read them on cards and in a fast
+reader without Wi-Fi. Read and star marks go back to the server at the next sync. The classic view of the
+upstream plugin is still available. Its documentation starts at [The classic view](#the-classic-view).
+
+## Offline card reader
+
+<p>
+  <img src="docs/images/views.gif" width="32%" alt="Tree, folder and the four card styles">
+  <img src="docs/images/quick-reader.gif" width="32%" alt="Moby-Dick in the quick reader">
+  <img src="docs/images/reader-settings.gif" width="32%" alt="Reader settings: font size, line spacing, font">
+</p>
+
+The text in the pictures is from public-domain books of [Project Gutenberg](https://www.gutenberg.org)
+(Moby-Dick, Pride and Prejudice and others).
+
+**RSS Reader** in the KOReader main menu now opens the card reader. Use **≡ > Classic view** to open the
+classic view. The card reader works with **FreshRSS** accounts and **local** feeds. Other account types are
+available in the classic view only.
+
+### Navigation and cards
+- The home screen shows the folders and feeds of the active account with their unread counts. The virtual
+  feeds **All unread**, **Today** and **Starred** come first. With more than one account, the last row
+  **All accounts** opens the account overview.
+- The header shows the path. Tap a part of the path to go back to that level. The header also has buttons
+  for unread only, sort order and sync.
+- Tap a feed to open its card list. There are four card styles: **Large**, **Compact**, **Text** and
+  **Minimal**. Unread cards are bold, starred cards have a star.
+- Hold a card for more actions: **Mark read** / **Mark unread**, **Star** / **Unstar**, **Save as EPUB**,
+  **Reload article**, **Remove from cache**, **Copy link** and **QR code**.
+- The menu (≡) has **Synchronize**, **Mark all in current path as read**, **Reload articles in current
+  path**, **Display**, **Settings**, **Manage feeds / OPML**, **Clear cache**, **Classic view** and **Quit**.
+
+### Reading
+Use **Settings > Open articles in** to select the reader:
+- **Quick reader** (default): a light reader made for RSS articles. It keeps short paragraphs together on
+  one page, shows a banner image, the author, the time and the reading time. It measures your reading
+  speed and writes your reading time into the KOReader reading statistics.
+- **KOReader reader**: the article opens as an HTML page in the normal KOReader reader, with all its
+  features. The pages stay out of the KOReader history.
+
+Controls of the quick reader:
+
+| Input | Action |
+|---|---|
+| Tap right half, swipe up, page forward key | Next page |
+| Tap left half, swipe down, page back key | Previous page |
+| Swipe left / swipe right | Next / previous article |
+| Back key or Back button | Back to the cards |
+| Tap the status line | Show page, time left, percent or article number |
+| Last page: tap forward | Next unread article |
+
+The gear icon in the title bar opens the reader settings: font, font size, line spacing, top margin, footer
+buttons, the reader mode and the frontlight.
+
+### Sync and cache
+- **⟳** or **≡ > Synchronize** syncs the current path. At the root, it syncs all accounts. Turn on **Sync
+  everything** to always sync all accounts.
+- A sync first sends the queued read and star marks. FreshRSS gets them in blocks of up to 100 articles per
+  request. Then the sync loads the feed tree, the articles and the images.
+- **Mode**: **Preload** loads all unread articles of each feed during the sync. **Cache only** loads a card
+  list from the server when you open it, in blocks (**Block size**), and keeps what you open.
+- **Max. cache size** (25 MB to unlimited) limits the stored text and images. When the cache is full, the
+  oldest articles drop out first. Starred articles always stay. **Keep read articles** keeps read articles
+  for a number of days.
+- **Thumbnails**, **Article images**, **Fetch preview image from article page** and **Parallel downloads**
+  control the image downloads. Images that another article already has are copied, not downloaded again.
+- Without a connection, the reader shows what is in the cache. Marks you make offline wait in a queue.
+
+### Image proxy (optional)
+If you run your own [imgproxy](https://imgproxy.net), the sync can download each image through it. The
+proxy resizes the image to the screen width and sends a JPEG. This makes downloads much smaller, and the
+device can also show AVIF, HEIC and WebP images. Add this block to `rssreader_configuration.lua`:
+
+```lua
+image_proxy = {
+    url = "https://img.example.org",
+    username = "proxy_user",     -- HTTP Basic Auth in front of imgproxy (recommended)
+    password = "proxy_password",
+},
+```
+
+Only the proxy gets the login. If the proxy fails during a sync, the rest of the sync downloads directly.
+
+### Storage
+All data of the card reader is in one SQLite database, `<KOReader data folder>/rssreader_offline.sqlite3`,
+and the images are in `<KOReader data folder>/rssreader_offline/`. The reading list ("List") of the classic
+view, the read state of local feeds and the sanitizer quota are also in this database now. At the first
+start, the plugin copies the old JSON files into the database and renames them to `*.migrated`.
+
+### Kindle notes
+- The plugin was tested on a Kindle Paperwhite 4 with KOReader v2026.07.1, also together with the
+  SimpleUI plugin.
+- The Kindle status bar (clock, Wi-Fi) can show over KOReader after a Wi-Fi change or when another window
+  refreshes the screen. The card reader hides it again.
+
+### Development
+- Design documents: [docs/specs](docs/specs).
+- Tests: run `spec/setup_env.sh` one time, then `spec/run.sh` (busted with LuaJIT, in WSL or Linux).
+- Emulator: `spec/emulator/run.sh` starts KOReader with the plugin and local test feeds. See
+  [spec/emulator/README.md](spec/emulator/README.md). `RSSREADER_EMU_DEMO=1` and
+  `spec/emulator/make_gifs.sh` make the pictures above.
+
+### Credits
+- The upstream plugin: [omer-faruq/rssreader.koplugin](https://github.com/omer-faruq/rssreader.koplugin)
+  (GPL-3.0).
+- The card layout and parts of the reader are adapted from
+  [quickrss.koplugin](https://github.com/qewer33/quickrss.koplugin) (MIT, (c) 2026 qewer33).
+
+## The classic view
+
+The sections below come from the upstream project. They describe the account setup and the classic view.
+
 The KOReader **RSS Reader** plugin lets you follow RSS feeds from a single screen. For everyday use you only need to define your account and pick the local feeds you care about.
 
 https://github.com/user-attachments/assets/9fa52ff9-2e5a-47f1-a207-db5e2cd80d7e
