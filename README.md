@@ -5,22 +5,27 @@ This is a fork of [omer-faruq/rssreader.koplugin](https://github.com/omer-faruq/
 reader without Wi-Fi. Read and star marks go back to the server at the next sync. The classic view of the
 upstream plugin is still available. Its documentation starts at [The classic view](#the-classic-view).
 
-## Offline card reader
-
-<p>
-  <img src="docs/images/views.gif" width="32%" alt="Tree, folder and the four card styles">
-  <img src="docs/images/quick-reader.gif" width="32%" alt="Moby-Dick in the quick reader">
-  <img src="docs/images/reader-settings.gif" width="32%" alt="Reader settings: font size, line spacing, font">
+<p align="center">
+  <img src="docs/images/overview.png" width="720" alt="The card reader: home screen, large cards and an article in the quick reader">
 </p>
+<p align="center"><em>From left to right: the home screen, a card list with large cards and an article in the quick reader.</em></p>
 
-The text in the pictures is from public-domain books of [Project Gutenberg](https://www.gutenberg.org)
-(Moby-Dick, Pride and Prejudice and others).
+## Offline card reader
 
 **RSS Reader** in the KOReader main menu now opens the card reader. Use **≡ > Classic view** to open the
 classic view. The card reader works with **FreshRSS** accounts and **local** feeds. Other account types are
 available in the classic view only.
 
+The pictures in this README show the demo mode of the emulator. Their text is from public-domain books of
+[Project Gutenberg](https://www.gutenberg.org) (Moby-Dick, Pride and Prejudice and others).
+
 ### Navigation and cards
+
+<p align="center">
+  <img src="docs/images/views.gif" width="364" alt="Home screen, folder and the four card styles">
+</p>
+<p align="center"><em>The home screen, the folder "Classics" and one card list in the four card styles.</em></p>
+
 - The home screen shows the folders and feeds of the active account with their unread counts. The virtual
   feeds **All unread**, **Today** and **Starred** come first. With more than one account, the last row
   **All accounts** opens the account overview.
@@ -34,6 +39,12 @@ available in the classic view only.
   path**, **Display**, **Settings**, **Manage feeds / OPML**, **Clear cache**, **Classic view** and **Quit**.
 
 ### Reading
+
+<p align="center">
+  <img src="docs/images/quick-reader.gif" width="364" alt="Moby-Dick, chapter 1, in the quick reader">
+</p>
+<p align="center"><em>A tap on the card opens Moby-Dick, chapter 1, in the quick reader. Each swipe up shows the next page.</em></p>
+
 Use **Settings > Open articles in** to select the reader:
 - **Quick reader** (default): a light reader made for RSS articles. It keeps short paragraphs together on
   one page, shows a banner image, the author, the time and the reading time. It measures your reading
@@ -52,8 +63,23 @@ Controls of the quick reader:
 | Tap the status line | Show page, time left, percent or article number |
 | Last page: tap forward | Next unread article |
 
-The gear icon in the title bar opens the reader settings: font, font size, line spacing, top margin, footer
-buttons, the reader mode and the frontlight.
+### Reader settings
+
+<p align="center">
+  <img src="docs/images/reader-settings.gif" width="364" alt="Reader settings: font size, line spacing, font">
+</p>
+<p align="center"><em>A new font size, line spacing and font in the reader settings. The article shows each change.</em></p>
+
+The gear icon in the title bar of the quick reader opens the reader settings:
+- **Font**: the fonts of KOReader, or **Default (serif)**.
+- **Font size** (12 to 40) and **Line spacing** (1.0 to 2.5).
+- **Top margin**: the space between the title bar and the text.
+- **Footer buttons**: the Back, page back and page forward buttons above the status line. Turn them off
+  to get more space for the text.
+- **Open articles in**: the reader mode. The new mode applies to the next article that opens.
+- **Brightness**: the frontlight dialog of KOReader, on devices with a frontlight.
+
+The quick reader shows a new font, font size, line spacing, top margin or footer setting immediately.
 
 ### Sync and cache
 - **⟳** or **≡ > Synchronize** syncs the current path. At the root, it syncs all accounts. Turn on **Sync
@@ -99,7 +125,8 @@ plugin.
 - Tests: run `spec/setup_env.sh` one time, then `spec/run.sh` (busted with LuaJIT, in WSL or Linux).
 - Emulator: `spec/emulator/run.sh` starts KOReader with the plugin and local test feeds. See
   [spec/emulator/README.md](spec/emulator/README.md). `RSSREADER_EMU_DEMO=1` and
-  `spec/emulator/make_gifs.sh` make the pictures above.
+  `spec/emulator/make_gifs.sh` make the GIFs above. The picture at the top puts three of these
+  demo frames next to each other.
 
 ### Credits
 - The upstream plugin: [omer-faruq/rssreader.koplugin](https://github.com/omer-faruq/rssreader.koplugin)
