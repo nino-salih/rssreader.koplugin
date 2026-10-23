@@ -3,7 +3,7 @@ local UIManager = require("ui/uimanager")
 local InfoMessage = require("ui/widget/infomessage")
 local NetworkMgr = require("ui/network/manager")
 local DataStorage = require("datastorage")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 local logger = require("logger")
 local lfs = require("libs/libkoreader-lfs")
 

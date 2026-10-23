@@ -32,7 +32,7 @@ local Size = require("ui/size")
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 
 local Screen = Device.screen
 

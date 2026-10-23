@@ -7,7 +7,7 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local Device = require("device")
 local UIManager = require("ui/uimanager")
 local InfoMessage = require("ui/widget/infomessage")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 local NetworkMgr = require("ui/network/manager")
 
 local Screen = Device.screen
