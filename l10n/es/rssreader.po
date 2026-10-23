@@ -1,0 +1,1617 @@
+# Spanish translations of the RSS Reader plugin for KOReader.
+# This file is distributed under the same license as the plugin (GPL-3.0).
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: rssreader.koplugin\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: es\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: _meta.lua:5 main.lua:583 main.lua:590
+msgid "RSS Reader"
+msgstr "RSS Reader"
+
+#: _meta.lua:6
+msgid "Read RSS feeds from local lists or online services."
+msgstr "Lee feeds RSS de listas locales o servicios en línea."
+
+#: main.lua:726 main.lua:732 main.lua:734
+#: main.lua:758 main.lua:764 main.lua:766
+#: rssreader_ui_chrome.lua:543 rssreader_ui_model.lua:696 rssreader_ui_model.lua:777
+msgid "Back"
+msgstr "Atrás"
+
+#: main.lua:808
+msgid "Could not find this article in its list."
+msgstr "No se encontró este artículo en su lista."
+
+#: main.lua:819 rssreader_menu.lua:301 rssreader_menu.lua:316
+#: rssreader_menu.lua:2843 rssreader_menu.lua:2863
+msgid "No unread stories found."
+msgstr "No hay artículos no leídos."
+
+#: main.lua:819 rssreader_menu.lua:2831
+msgid "No more stories."
+msgstr "No hay más artículos."
+
+#: main.lua:985
+msgid "No RSS accounts available."
+msgstr "No hay cuentas RSS disponibles."
+
+#: main.lua:992
+msgid "RSS Accounts"
+msgstr "Cuentas RSS"
+
+#: main.lua:1037
+msgid "Open Sanitized"
+msgstr "Abrir depurado"
+
+#: main.lua:1044
+#, c-format
+msgid "Failed to open link: %s"
+msgstr "No se pudo abrir el enlace: %s"
+
+#: main.lua:1060
+msgid "Save Sanitized"
+msgstr "Guardar depurado"
+
+#: rssreader_commons.lua:7 rssreader_commons.lua:11
+msgid "Unnamed Account"
+msgstr "Cuenta sin nombre"
+
+#: rssreader_epub_offline.lua:114 rssreader_external_api.lua:196 rssreader_external_api.lua:226
+#: rssreader_menu.lua:483 rssreader_menu.lua:501 rssreader_menu.lua:3128
+#: rssreader_menu.lua:3150
+#, c-format
+msgid "Saved to: %s"
+msgstr "Guardado en: %s"
+
+#: rssreader_epub_offline.lua:116 rssreader_menu.lua:453 rssreader_menu.lua:3093
+#: rssreader_menu.lua:3292
+msgid "No target folder available."
+msgstr "No hay carpeta de destino disponible."
+
+#: rssreader_epub_offline.lua:118 rssreader_menu.lua:438 rssreader_menu.lua:3078
+msgid "Could not save story."
+msgstr "No se pudo guardar el artículo."
+
+#: rssreader_epub_offline.lua:120 rssreader_menu.lua:496 rssreader_menu.lua:3140
+msgid "Failed to save story."
+msgstr "Error al guardar el artículo."
+
+#: rssreader_epub_offline.lua:142 rssreader_ui_tree.lua:257
+msgid "Loading images…"
+msgstr "Cargando imágenes…"
+
+#: rssreader_epubdownloadbackend.lua:582
+#, c-format
+msgid ""
+"%1\n"
+"\n"
+"Building EPUB…"
+msgstr ""
+"%1\n"
+"\n"
+"Creando EPUB…"
+
+#: rssreader_epubdownloadbackend.lua:605
+msgid "Building cover…"
+msgstr "Creando portada…"
+
+#: rssreader_epubdownloadbackend.lua:820 rssreader_epubdownloadbackend.lua:826
+#, c-format
+msgid "Retrieving image %1 / %2 …"
+msgstr "Obteniendo imagen %1 / %2 …"
+
+#: rssreader_epubdownloadbackend.lua:870
+#, c-format
+msgid "Downloading image %1 failed. Continue anyway?"
+msgstr "Error al descargar la imagen %1. ¿Continuar de todos modos?"
+
+#: rssreader_epubdownloadbackend.lua:870
+msgid "Stop"
+msgstr "Detener"
+
+#: rssreader_epubdownloadbackend.lua:870
+msgid "Continue"
+msgstr "Continuar"
+
+#: rssreader_epubdownloadbackend.lua:882
+msgid ""
+"Download did not complete.\n"
+"Do you want to create an EPUB with the already downloaded images?"
+msgstr ""
+"La descarga no se completó.\n"
+"¿Quieres crear un EPUB con las imágenes ya descargadas?"
+
+#: rssreader_epubdownloadbackend.lua:882
+msgid "Don't create"
+msgstr "No crear"
+
+#: rssreader_epubdownloadbackend.lua:882
+msgid "Create"
+msgstr "Crear"
+
+#: rssreader_epubdownloadbackend.lua:887
+msgid "Canceled. Cleaning up…"
+msgstr "Cancelado. Limpiando…"
+
+#: rssreader_epubdownloadbackend.lua:889
+#, c-format
+msgid ""
+"%1\n"
+"\n"
+"Packing EPUB…"
+msgstr ""
+"%1\n"
+"\n"
+"Empaquetando EPUB…"
+
+#: rssreader_external_api.lua:108 rssreader_menu_utils.lua:1688
+msgid "Downloading and sanitizing link..."
+msgstr "Descargando y depurando el enlace..."
+
+#: rssreader_external_api.lua:129 rssreader_menu_utils.lua:1704
+#, c-format
+msgid "Failed to download link: %s"
+msgstr "Error al descargar el enlace: %s"
+
+#: rssreader_external_api.lua:183
+msgid "Creating EPUB..."
+msgstr "Creando EPUB..."
+
+#: rssreader_external_api.lua:204 rssreader_menu_utils.lua:1775
+#, c-format
+msgid "Failed to create EPUB: %s"
+msgstr "Error al crear el EPUB: %s"
+
+#: rssreader_external_api.lua:234
+msgid "Failed to save file"
+msgstr "Error al guardar el archivo"
+
+#: rssreader_gettext.lua:11 rssreader_menu.lua:577 rssreader_menu.lua:623
+#: rssreader_menu.lua:664 rssreader_menu.lua:954 rssreader_menu.lua:1163
+#: rssreader_menu.lua:1190 rssreader_menu.lua:1392 rssreader_menu.lua:1889
+#: rssreader_menu_backends.lua:441 rssreader_menu_utils.lua:236
+msgid "Mark all as read"
+msgstr "Marcar todo como leído"
+
+#: rssreader_menu.lua:67 rssreader_menu.lua:752 rssreader_story_viewer.lua:336
+msgid "Added to List."
+msgstr "Añadido a la lista."
+
+#: rssreader_menu.lua:78 rssreader_menu.lua:761 rssreader_story_viewer.lua:342
+msgid "Already in List."
+msgstr "Ya está en la lista."
+
+#: rssreader_menu.lua:80 rssreader_menu.lua:763 rssreader_story_viewer.lua:344
+msgid "Could not add to List."
+msgstr "No se pudo añadir a la lista."
+
+#: rssreader_menu.lua:273 rssreader_menu.lua:326 rssreader_menu.lua:2792
+#, c-format
+msgid "Opening: %s"
+msgstr "Abriendo: %s"
+
+#: rssreader_menu.lua:359 rssreader_menu.lua:378
+msgid "Failed to update story state."
+msgstr "Error al actualizar el estado del artículo."
+
+#: rssreader_menu.lua:426
+msgid "Failed to update star state."
+msgstr "Error al actualizar el favorito."
+
+#: rssreader_menu.lua:443 rssreader_menu.lua:3083
+msgid "Saving story..."
+msgstr "Guardando artículo..."
+
+#: rssreader_menu.lua:447 rssreader_menu.lua:3087
+msgid "Failed to download story."
+msgstr "Error al descargar el artículo."
+
+#: rssreader_menu.lua:543 rssreader_menu.lua:1969 rssreader_menu.lua:2234
+msgid "Open on startup"
+msgstr "Abrir al iniciar"
+
+#: rssreader_menu.lua:564 rssreader_menu.lua:941 rssreader_menu.lua:986
+#: rssreader_menu.lua:1373 rssreader_menu.lua:1435 rssreader_menu.lua:1443
+#: rssreader_menu.lua:1756 rssreader_menu.lua:1764 rssreader_menu.lua:1849
+#: rssreader_menu_backends.lua:431 rssreader_menu_backends.lua:448
+msgid "Feed"
+msgstr "Feed"
+
+#: rssreader_menu.lua:567 rssreader_menu.lua:613 rssreader_menu.lua:654
+#: rssreader_menu.lua:725 rssreader_menu.lua:944 rssreader_menu.lua:1876
+#: rssreader_menu.lua:2895 rssreader_menu_backends.lua:832 rssreader_story_viewer.lua:364
+msgid "Open"
+msgstr "Abrir"
+
+#: rssreader_menu.lua:585 rssreader_menu.lua:631 rssreader_menu.lua:672
+#: rssreader_menu.lua:835 rssreader_menu.lua:962 rssreader_menu.lua:2969
+#: rssreader_menu_backends.lua:848 rssreader_reader_return.lua:687 rssreader_story_viewer.lua:422
+msgid "Close"
+msgstr "Cerrar"
+
+#: rssreader_menu.lua:610
+msgid "Category"
+msgstr "Categoría"
+
+#: rssreader_menu.lua:651 rssreader_menu.lua:1058 rssreader_menu.lua:1148
+msgid "Group"
+msgstr "Grupo"
+
+#: rssreader_menu.lua:714 rssreader_menu.lua:2887
+msgid "Preview"
+msgstr "Vista previa"
+
+#: rssreader_menu.lua:734 rssreader_menu.lua:901 rssreader_menu.lua:2908
+#: rssreader_story_viewer.lua:351
+msgid "Save"
+msgstr "Guardar"
+
+#: rssreader_menu.lua:746 rssreader_menu.lua:2127 rssreader_menu.lua:2127
+#: rssreader_story_viewer.lua:331
+msgid "Add to List"
+msgstr "Añadir a la lista"
+
+#: rssreader_menu.lua:774 rssreader_story_viewer.lua:294 rssreader_ui_cards.lua:304
+#: rssreader_ui_model.lua:697
+msgid "Unstar"
+msgstr "Quitar de favoritos"
+
+#: rssreader_menu.lua:774 rssreader_story_viewer.lua:294 rssreader_ui_cards.lua:304
+#: rssreader_ui_model.lua:697
+msgid "Star"
+msgstr "Añadir a favoritos"
+
+#: rssreader_menu.lua:790
+msgid "Edit Tags"
+msgstr "Editar etiquetas"
+
+#: rssreader_menu.lua:804 rssreader_menu.lua:2917
+msgid "Mark as read"
+msgstr "Marcar como leído"
+
+#: rssreader_menu.lua:807 rssreader_menu.lua:2917 rssreader_story_viewer.lua:291
+msgid "Mark as unread"
+msgstr "Marcar como no leído"
+
+#: rssreader_menu.lua:821 rssreader_menu.lua:2955
+msgid "Show QR Code"
+msgstr "Mostrar código QR"
+
+#: rssreader_menu.lua:843 rssreader_menu.lua:2977
+msgid "Story"
+msgstr "Artículo"
+
+#: rssreader_menu.lua:857 rssreader_menu_backends.lua:824 rssreader_menu_backends.lua:829
+#: rssreader_menu_backends.lua:958
+msgid "Tags"
+msgstr "Etiquetas"
+
+#: rssreader_menu.lua:882
+msgid "Missing story identifier."
+msgstr "Falta el identificador del artículo."
+
+#: rssreader_menu.lua:890
+msgid "Edit tags (comma separated)"
+msgstr "Editar etiquetas (separadas por comas)"
+
+#: rssreader_menu.lua:894 rssreader_menu.lua:1156 rssreader_menu.lua:1183
+#: rssreader_menu.lua:1385 rssreader_menu.lua:2340 rssreader_menu.lua:3166
+#: rssreader_menu_backends.lua:210 rssreader_menu_backends.lua:286 rssreader_menu_backends.lua:362
+#: rssreader_menu_backends.lua:434 rssreader_menu_utils.lua:244
+msgid "Cancel"
+msgstr "Cancelar"
+
+#: rssreader_menu.lua:921
+msgid "Tags updated."
+msgstr "Etiquetas actualizadas."
+
+#: rssreader_menu.lua:923
+msgid "Failed to update tags."
+msgstr "Error al actualizar las etiquetas."
+
+#: rssreader_menu.lua:980 rssreader_menu.lua:1629
+msgid "Feed URL is missing."
+msgstr "Falta la URL del feed."
+
+#: rssreader_menu.lua:988 rssreader_menu.lua:1435
+#, c-format
+msgid "Marking feed '%s' as read..."
+msgstr "Marcando el feed '%s' como leído..."
+
+#: rssreader_menu.lua:999 rssreader_menu.lua:1820
+#, c-format
+msgid "Failed to load feed: %s"
+msgstr "Error al cargar el feed: %s"
+
+#: rssreader_menu.lua:999 rssreader_menu.lua:1820
+msgid "unknown"
+msgstr "desconocido"
+
+#: rssreader_menu.lua:1040
+#, c-format
+msgid "Marked %d item(s) as read."
+msgstr "%d artículo(s) marcado(s) como leído(s)."
+
+#: rssreader_menu.lua:1052 rssreader_menu.lua:1142
+msgid "Group has no feeds."
+msgstr "El grupo no tiene feeds."
+
+#: rssreader_menu.lua:1060
+#, c-format
+msgid "Marking group '%s' as read..."
+msgstr "Marcando el grupo '%s' como leído..."
+
+#: rssreader_menu.lua:1073
+#, c-format
+msgid "Marked %d item(s) in %d feed(s) as read."
+msgstr "%d artículo(s) en %d feed(s) marcado(s) como leído(s)."
+
+#: rssreader_menu.lua:1149
+#, c-format
+msgid "Mark all stories in group '%s' as read?"
+msgstr "¿Marcar todos los artículos del grupo '%s' como leídos?"
+
+#: rssreader_menu.lua:1176 rssreader_menu.lua:1377
+#, c-format
+msgid "Mark all stories in account '%s' as read?"
+msgstr "¿Marcar todos los artículos de la cuenta '%s' como leídos?"
+
+#: rssreader_menu.lua:1176 rssreader_menu.lua:1218 rssreader_menu.lua:1377
+msgid "Account"
+msgstr "Cuenta"
+
+#: rssreader_menu.lua:1210 rssreader_menu.lua:1253
+msgid "Unable to access account."
+msgstr "No se puede acceder a la cuenta."
+
+#: rssreader_menu.lua:1218
+#, c-format
+msgid "Marked account '%s' as read."
+msgstr "Cuenta '%s' marcada como leída."
+
+#: rssreader_menu.lua:1219
+#, c-format
+msgid "Failed to mark account as read: %s"
+msgstr "Error al marcar la cuenta como leída: %s"
+
+#: rssreader_menu.lua:1219 rssreader_menu.lua:1291 rssreader_menu.lua:1451
+#: rssreader_menu.lua:1501 rssreader_menu.lua:1559 rssreader_menu_backends.lua:236
+#: rssreader_menu_backends.lua:312 rssreader_menu_backends.lua:388 rssreader_menu_backends.lua:449
+msgid "Unknown error"
+msgstr "Error desconocido"
+
+#: rssreader_menu.lua:1230
+msgid "Account type not supported."
+msgstr "Tipo de cuenta no compatible."
+
+#: rssreader_menu.lua:1238
+msgid "Account integration is not available."
+msgstr "La integración de la cuenta no está disponible."
+
+#: rssreader_menu.lua:1263
+msgid "Failed to load account structure."
+msgstr "Error al cargar la estructura de la cuenta."
+
+#: rssreader_menu.lua:1272
+msgid "No feeds found in account."
+msgstr "No se encontraron feeds en la cuenta."
+
+#: rssreader_menu.lua:1279 rssreader_menu.lua:1546
+#, c-format
+msgid "Marking %d feed(s) as read..."
+msgstr "Marcando %d feed(s) como leído(s)..."
+
+#: rssreader_menu.lua:1297 rssreader_menu.lua:1565 rssreader_menu_backends.lua:242
+#: rssreader_menu_backends.lua:318 rssreader_menu_backends.lua:394
+#, c-format
+msgid "Marked %d feed(s) as read."
+msgstr "%d feed(s) marcado(s) como leído(s)."
+
+#: rssreader_menu.lua:1308 rssreader_menu.lua:1518 rssreader_menu.lua:1576
+#: rssreader_menu_backends.lua:253 rssreader_menu_backends.lua:329 rssreader_menu_backends.lua:405
+#, c-format
+msgid ""
+"Errors occurred:\n"
+"%s"
+msgstr ""
+"Se produjeron errores:\n"
+"%s"
+
+#: rssreader_menu.lua:1373 rssreader_menu_backends.lua:431
+#, c-format
+msgid "Mark all stories in '%s' as read?"
+msgstr "¿Marcar todos los artículos de '%s' como leídos?"
+
+#: rssreader_menu.lua:1375
+#, c-format
+msgid "Mark all stories in '%s' and subfolders as read?"
+msgstr "¿Marcar todos los artículos de '%s' y sus subcarpetas como leídos?"
+
+#: rssreader_menu.lua:1375 rssreader_menu.lua:1460 rssreader_menu.lua:1524
+msgid "Folder"
+msgstr "Carpeta"
+
+#: rssreader_menu.lua:1427
+msgid "Mark all as read is not supported for virtual feeds. Please use individual feeds."
+msgstr "'Marcar todo como leído' no es compatible con feeds virtuales. Usa los feeds individuales."
+
+#: rssreader_menu.lua:1443 rssreader_menu_backends.lua:448
+#, c-format
+msgid "Marked feed '%s' as read."
+msgstr "Feed '%s' marcado como leído."
+
+#: rssreader_menu.lua:1451 rssreader_menu_backends.lua:449
+#, c-format
+msgid "Failed to mark feed as read: %s"
+msgstr "Error al marcar el feed como leído: %s"
+
+#: rssreader_menu.lua:1460
+#, c-format
+msgid "Marking folder '%s' as read..."
+msgstr "Marcando la carpeta '%s' como leída..."
+
+#: rssreader_menu.lua:1487
+msgid "No feeds found in folder."
+msgstr "No se encontraron feeds en la carpeta."
+
+#: rssreader_menu.lua:1507
+#, c-format
+msgid "Marked %d feed(s) in folder as read."
+msgstr "%d feed(s) de la carpeta marcado(s) como leído(s)."
+
+#: rssreader_menu.lua:1524
+#, c-format
+msgid "Marked folder '%s' as read."
+msgstr "Carpeta '%s' marcada como leída."
+
+#: rssreader_menu.lua:1539 rssreader_menu_backends.lua:194 rssreader_menu_backends.lua:270
+#: rssreader_menu_backends.lua:346
+msgid "No feeds found to mark as read."
+msgstr "No hay feeds que marcar como leídos."
+
+#: rssreader_menu.lua:1703 rssreader_menu.lua:1835 rssreader_menu_backends.lua:604
+#: rssreader_menu_backends.lua:744 rssreader_menu_backends.lua:1007 rssreader_menu_backends.lua:1146
+#: rssreader_menu_backends.lua:1429 rssreader_menu_backends.lua:1590 rssreader_menu_backends.lua:1732
+#: rssreader_menu_backends.lua:1987
+msgid "No stories available."
+msgstr "No hay artículos disponibles."
+
+#: rssreader_menu.lua:1864
+msgid "Account info"
+msgstr "Info de la cuenta"
+
+#: rssreader_menu.lua:1898
+msgid "Delete feed (future feature)"
+msgstr "Eliminar feed (función futura)"
+
+#: rssreader_menu.lua:1904
+msgid "Feed deletion not yet implemented for local accounts."
+msgstr "Eliminar feeds aún no está implementado para cuentas locales."
+
+#: rssreader_menu.lua:1923 rssreader_menu.lua:2592 rssreader_menu.lua:2688
+#: rssreader_menu.lua:2699 rssreader_menu.lua:3069
+#, c-format
+msgid "List (%d)"
+msgstr "Lista (%d)"
+
+#: rssreader_menu.lua:1924
+msgid "List"
+msgstr "Lista"
+
+#: rssreader_menu.lua:1933 rssreader_menu.lua:1948 rssreader_ui_tree.lua:947
+msgid "Settings"
+msgstr "Ajustes"
+
+#: rssreader_menu.lua:1951 rssreader_menu.lua:2091
+msgid "Tap action on feed items"
+msgstr "Acción al tocar artículos"
+
+#: rssreader_menu.lua:1960 rssreader_menu.lua:2158
+msgid "List view mode"
+msgstr "Modo de vista de lista"
+
+#: rssreader_menu.lua:1978 rssreader_menu.lua:2256
+msgid "Page keys at article edges"
+msgstr "Teclas de página en los bordes"
+
+#: rssreader_menu.lua:1987 rssreader_menu.lua:2273
+msgid "Link popup"
+msgstr "Ventana de enlace"
+
+#: rssreader_menu.lua:1996 rssreader_reader_return.lua:674
+msgid "Return to RSS from an article"
+msgstr "Volver a RSS desde un artículo"
+
+#: rssreader_menu.lua:2008 rssreader_menu.lua:2008
+msgid "Designed EPUB cover"
+msgstr "Portada EPUB diseñada"
+
+#: rssreader_menu.lua:2017
+msgid "Saved articles get a cover with their title, lead image and byline."
+msgstr "Los artículos guardados reciben una portada con su título, imagen principal y autoría."
+
+#: rssreader_menu.lua:2018
+msgid "Saved articles use the article's own lead image as the cover."
+msgstr "Los artículos guardados usan su propia imagen principal como portada."
+
+#: rssreader_menu.lua:2024 rssreader_menu.lua:2024
+msgid "Show NewsBlur 'All Feeds'"
+msgstr "Mostrar 'All Feeds' de NewsBlur"
+
+#: rssreader_menu.lua:2046
+msgid "NewsBlur 'All Feeds' enabled. Please reopen NewsBlur accounts."
+msgstr "'All Feeds' de NewsBlur activado. Vuelve a abrir las cuentas de NewsBlur."
+
+#: rssreader_menu.lua:2046
+msgid "NewsBlur 'All Feeds' disabled. Please reopen NewsBlur accounts."
+msgstr "'All Feeds' de NewsBlur desactivado. Vuelve a abrir las cuentas de NewsBlur."
+
+#: rssreader_menu.lua:2051 rssreader_ui_tree.lua:950
+msgid "Clear cache"
+msgstr "Borrar caché"
+
+#: rssreader_menu.lua:2060
+msgid "Import from OPML"
+msgstr "Importar desde OPML"
+
+#: rssreader_menu.lua:2069
+msgid "Export to OPML"
+msgstr "Exportar a OPML"
+
+#: rssreader_menu.lua:2094 rssreader_menu.lua:2094
+msgid "Show preview"
+msgstr "Mostrar vista previa"
+
+#: rssreader_menu.lua:2105 rssreader_menu.lua:2105
+msgid "Open directly"
+msgstr "Abrir directamente"
+
+#: rssreader_menu.lua:2116 rssreader_menu.lua:2116
+msgid "Save only"
+msgstr "Solo guardar"
+
+#: rssreader_menu.lua:2161
+msgid "Title only"
+msgstr "Solo título"
+
+#: rssreader_menu.lua:2172
+msgid "Title and snippet"
+msgstr "Título y extracto"
+
+#: rssreader_menu.lua:2211
+msgid "Account list"
+msgstr "Lista de cuentas"
+
+#: rssreader_menu.lua:2222
+#, c-format
+msgid "%s: All Unread"
+msgstr "%s: Todos los no leídos"
+
+#: rssreader_menu.lua:2229
+#, c-format
+msgid "Custom: %s › %s"
+msgstr "Personalizado: %s › %s"
+
+#: rssreader_menu.lua:2234
+msgid "Long-press a feed or folder to pick your own."
+msgstr "Mantén pulsado un feed o una carpeta para elegir otro."
+
+#: rssreader_menu.lua:2257
+msgid "On the last page, press twice to go to the next article; on the first page, to the previous one."
+msgstr "En la última página, pulsa dos veces para ir al siguiente artículo; en la primera, al anterior."
+
+#: rssreader_menu.lua:2259
+msgid "Do nothing"
+msgstr "No hacer nada"
+
+#: rssreader_menu.lua:2260
+msgid "Next / previous article"
+msgstr "Artículo siguiente / anterior"
+
+#: rssreader_menu.lua:2261
+msgid "Next / previous unread article"
+msgstr "Artículo no leído siguiente / anterior"
+
+#: rssreader_menu.lua:2276
+msgid "Show 'Open Sanitized' button"
+msgstr "Mostrar botón 'Abrir depurado'"
+
+#: rssreader_menu.lua:2286
+msgid "Show 'Save Sanitized' button"
+msgstr "Mostrar botón 'Guardar depurado'"
+
+#: rssreader_menu.lua:2304
+msgid ""
+"No OPML/XML files found in plugin directory.\n"
+"\n"
+"Place an .opml or .xml file in:\n"
+msgstr ""
+"No se encontraron archivos OPML/XML en la carpeta del plugin.\n"
+"\n"
+"Coloca un archivo .opml o .xml en:\n"
+
+#: rssreader_menu.lua:2324
+msgid "Select OPML file to import"
+msgstr "Selecciona el archivo OPML a importar"
+
+#: rssreader_menu.lua:2336
+msgid "Account name for imported feeds"
+msgstr "Nombre de cuenta para los feeds importados"
+
+#: rssreader_menu.lua:2347
+msgid "Import"
+msgstr "Importar"
+
+#: rssreader_menu.lua:2354
+msgid "Account name cannot be empty."
+msgstr "El nombre de la cuenta no puede estar vacío."
+
+#: rssreader_menu.lua:2371
+msgid "Import failed: "
+msgstr "Error al importar: "
+
+#: rssreader_menu.lua:2377
+#, c-format
+msgid ""
+"Successfully imported %d feeds into account '%s'.\n"
+"\n"
+"Please restart KOReader for changes to take effect."
+msgstr ""
+"Se importaron %d feeds en la cuenta '%s'.\n"
+"\n"
+"Reinicia KOReader para aplicar los cambios."
+
+#: rssreader_menu.lua:2388
+msgid "Export failed: "
+msgstr "Error al exportar: "
+
+#: rssreader_menu.lua:2394
+#, c-format
+msgid ""
+"Successfully exported %d feeds to:\n"
+"%s"
+msgstr ""
+"Se exportaron %d feeds a:\n"
+"%s"
+
+#: rssreader_menu.lua:2410
+msgid "Failed to clear cache."
+msgstr "Error al borrar la caché."
+
+#: rssreader_menu.lua:2417
+msgid "Cache cleared."
+msgstr "Caché borrada."
+
+#: rssreader_menu.lua:2446
+#, c-format
+msgid "Account '%s' is not implemented yet."
+msgstr "La cuenta '%s' aún no está implementada."
+
+#: rssreader_menu.lua:2462 rssreader_menu.lua:2551
+msgid "Unnamed feed"
+msgstr "Feed sin nombre"
+
+#: rssreader_menu.lua:2478
+#, c-format
+msgid "Local Group %d"
+msgstr "Grupo local %d"
+
+#: rssreader_menu.lua:2483
+#, c-format
+msgid "%s (group)"
+msgstr "%s (grupo)"
+
+#: rssreader_menu.lua:2494
+msgid "No local feeds available."
+msgstr "No hay feeds locales disponibles."
+
+#: rssreader_menu.lua:2563
+msgid "No feeds in this group."
+msgstr "No hay feeds en este grupo."
+
+#: rssreader_menu.lua:2575 rssreader_menu.lua:2575
+msgid "Local Group"
+msgstr "Grupo local"
+
+#: rssreader_menu.lua:2595
+msgid "Story List"
+msgstr "Lista de artículos"
+
+#: rssreader_menu.lua:2604
+msgid "Clear List"
+msgstr "Vaciar lista"
+
+#: rssreader_menu.lua:2613
+msgid "Save All"
+msgstr "Guardar todo"
+
+#: rssreader_menu.lua:2664 rssreader_menu.lua:2942 rssreader_menu.lua:3045
+#: rssreader_story_viewer.lua:322
+msgid "Removed from List."
+msgstr "Quitado de la lista."
+
+#: rssreader_menu.lua:2851
+msgid "No previous stories."
+msgstr "No hay artículos anteriores."
+
+#: rssreader_menu.lua:2937
+msgid "Remove from list"
+msgstr "Quitar de la lista"
+
+#: rssreader_menu.lua:3157
+msgid "List is already empty."
+msgstr "La lista ya está vacía."
+
+#: rssreader_menu.lua:3163
+#, c-format
+msgid "Clear all %d items from the List?"
+msgstr "¿Quitar los %d artículos de la lista?"
+
+#: rssreader_menu.lua:3173
+msgid "Clear All"
+msgstr "Vaciar todo"
+
+#: rssreader_menu.lua:3178
+msgid "List cleared."
+msgstr "Lista vaciada."
+
+#: rssreader_menu.lua:3198
+msgid "List is empty."
+msgstr "La lista está vacía."
+
+#: rssreader_menu.lua:3213
+#, c-format
+msgid ""
+"Saving %d of %d...\n"
+"%s\n"
+"\n"
+"Tap outside to cancel."
+msgstr ""
+"Guardando %d de %d...\n"
+"%s\n"
+"\n"
+"Toca fuera para cancelar."
+
+#: rssreader_menu.lua:3239 rssreader_menu.lua:3274
+#, c-format
+msgid "Cancelled. Saved %d of %d stories."
+msgstr "Cancelado. Se guardaron %d de %d artículos."
+
+#: rssreader_menu.lua:3251
+#, c-format
+msgid "All %d stories saved successfully."
+msgstr "Se guardaron los %d artículos correctamente."
+
+#: rssreader_menu.lua:3266
+msgid "Untitled"
+msgstr "Sin título"
+
+#: rssreader_menu_backends.lua:201 rssreader_menu_backends.lua:277 rssreader_menu_backends.lua:353
+#, c-format
+msgid ""
+"All feeds will be marked as read one by one. This may take some time. Do you want to proceed?\n"
+"\n"
+"Total feeds: %d"
+msgstr ""
+"Todos los feeds se marcarán como leídos uno a uno. Puede tardar un poco. ¿Quieres continuar?\n"
+"\n"
+"Total de feeds: %d"
+
+#: rssreader_menu_backends.lua:217 rssreader_menu_backends.lua:293 rssreader_menu_backends.lua:369
+msgid "OK"
+msgstr "Aceptar"
+
+#: rssreader_menu_backends.lua:228 rssreader_menu_backends.lua:304 rssreader_menu_backends.lua:380
+#, c-format
+msgid "Marking feed %d/%d as read..."
+msgstr "Marcando feed %d/%d como leído..."
+
+#: rssreader_menu_backends.lua:423
+msgid "FreshRSS cannot mark only today's stories as read. Use 'All Unread' or individual feeds."
+msgstr "FreshRSS no puede marcar como leídos solo los artículos de hoy. Usa 'Todos los no leídos' o feeds individuales."
+
+#: rssreader_menu_backends.lua:467
+msgid "NewsBlur integration is not available."
+msgstr "La integración con NewsBlur no está disponible."
+
+#: rssreader_menu_backends.lua:475
+msgid "Unable to open NewsBlur account."
+msgstr "No se puede abrir la cuenta de NewsBlur."
+
+#: rssreader_menu_backends.lua:489
+msgid "Failed to load NewsBlur subscriptions."
+msgstr "Error al cargar las suscripciones de NewsBlur."
+
+#: rssreader_menu_backends.lua:504 rssreader_menu_backends.lua:865 rssreader_menu_backends.lua:1310
+#: rssreader_menu_backends.lua:1895
+msgid "Untitled folder"
+msgstr "Carpeta sin nombre"
+
+#: rssreader_menu_backends.lua:524 rssreader_menu_backends.lua:880 rssreader_menu_backends.lua:1327
+#: rssreader_menu_backends.lua:1910
+msgid "Untitled feed"
+msgstr "Feed sin nombre"
+
+#: rssreader_menu_backends.lua:544 rssreader_menu_backends.lua:897 rssreader_menu_backends.lua:1344
+#: rssreader_menu_backends.lua:1679 rssreader_menu_backends.lua:1927
+msgid "No feeds available."
+msgstr "No hay feeds disponibles."
+
+#: rssreader_menu_backends.lua:553 rssreader_menu_backends.lua:650 rssreader_menu_backends.lua:658
+msgid "NewsBlur"
+msgstr "NewsBlur"
+
+#: rssreader_menu_backends.lua:705 rssreader_menu_backends.lua:1107 rssreader_menu_backends.lua:1529
+msgid "More"
+msgstr "Más"
+
+#: rssreader_menu_backends.lua:732 rssreader_menu_backends.lua:1134 rssreader_menu_backends.lua:1577
+msgid "Failed to load stories."
+msgstr "Error al cargar los artículos."
+
+#: rssreader_menu_backends.lua:752 rssreader_menu_backends.lua:1154 rssreader_menu_backends.lua:1566
+#: rssreader_menu_backends.lua:1598
+msgid "No more stories available."
+msgstr "No hay más artículos disponibles."
+
+#: rssreader_menu_backends.lua:780
+msgid "CommaFeed integration is not available."
+msgstr "La integración con CommaFeed no está disponible."
+
+#: rssreader_menu_backends.lua:788
+msgid "Unable to open CommaFeed account."
+msgstr "No se puede abrir la cuenta de CommaFeed."
+
+#: rssreader_menu_backends.lua:806
+msgid "Failed to load CommaFeed subscriptions."
+msgstr "Error al cargar las suscripciones de CommaFeed."
+
+#: rssreader_menu_backends.lua:840
+msgid "Refresh tags"
+msgstr "Actualizar etiquetas"
+
+#: rssreader_menu_backends.lua:906 rssreader_menu_backends.lua:1052 rssreader_menu_backends.lua:1060
+msgid "CommaFeed"
+msgstr "CommaFeed"
+
+#: rssreader_menu_backends.lua:925
+msgid "Failed to load tags."
+msgstr "Error al cargar las etiquetas."
+
+#: rssreader_menu_backends.lua:952
+msgid "No tags available."
+msgstr "No hay etiquetas disponibles."
+
+#: rssreader_menu_backends.lua:1182
+msgid "FreshRSS integration is not available."
+msgstr "La integración con FreshRSS no está disponible."
+
+#: rssreader_menu_backends.lua:1190
+msgid "Unable to open FreshRSS account."
+msgstr "No se puede abrir la cuenta de FreshRSS."
+
+#: rssreader_menu_backends.lua:1201
+msgid "Today (Unread)"
+msgstr "Hoy (no leídos)"
+
+#: rssreader_menu_backends.lua:1210
+msgid "All Unread"
+msgstr "Todos los no leídos"
+
+#: rssreader_menu_backends.lua:1219 rssreader_ui_model.lua:174 rssreader_ui_model.lua:175
+msgid "Starred"
+msgstr "Favoritos"
+
+#: rssreader_menu_backends.lua:1287
+msgid "Failed to load FreshRSS subscriptions."
+msgstr "Error al cargar las suscripciones de FreshRSS."
+
+#: rssreader_menu_backends.lua:1353 rssreader_menu_backends.lua:1475 rssreader_menu_backends.lua:1483
+msgid "FreshRSS"
+msgstr "FreshRSS"
+
+#: rssreader_menu_backends.lua:1626
+msgid "Fever API integration is not available."
+msgstr "La integración con la API de Fever no está disponible."
+
+#: rssreader_menu_backends.lua:1634
+msgid "Unable to open Fever API account."
+msgstr "No se puede abrir la cuenta de la API de Fever."
+
+#: rssreader_menu_backends.lua:1648
+msgid "Failed to load Fever API subscriptions."
+msgstr "Error al cargar las suscripciones de la API de Fever."
+
+#: rssreader_menu_backends.lua:1667
+msgid "Virtual feed"
+msgstr "Feed virtual"
+
+#: rssreader_menu_backends.lua:1688 rssreader_menu_backends.lua:1777 rssreader_menu_backends.lua:1785
+msgid "Fever API"
+msgstr "API de Fever"
+
+#: rssreader_menu_backends.lua:1830 rssreader_menu_backends.lua:2083
+msgid "Failed to fetch stories."
+msgstr "Error al obtener los artículos."
+
+#: rssreader_menu_backends.lua:1855
+msgid "Miniflux integration is not available."
+msgstr "La integración con Miniflux no está disponible."
+
+#: rssreader_menu_backends.lua:1863
+msgid "Unable to open Miniflux account."
+msgstr "No se puede abrir la cuenta de Miniflux."
+
+#: rssreader_menu_backends.lua:1877
+msgid "Failed to load Miniflux subscriptions."
+msgstr "Error al cargar las suscripciones de Miniflux."
+
+#: rssreader_menu_backends.lua:1936 rssreader_menu_backends.lua:2032 rssreader_menu_backends.lua:2040
+msgid "Miniflux"
+msgstr "Miniflux"
+
+#: rssreader_menu_utils.lua:228
+msgid "Refresh"
+msgstr "Actualizar"
+
+#: rssreader_menu_utils.lua:310
+#, c-format
+msgid "RSS Reader will open '%s' on startup."
+msgstr "RSS Reader abrirá '%s' al iniciar."
+
+#: rssreader_menu_utils.lua:365
+#, c-format
+msgid "Startup feed '%s' was not found."
+msgstr "No se encontró el feed de inicio '%s'."
+
+#: rssreader_menu_utils.lua:516 rssreader_menu_utils.lua:934 rssreader_menu_utils.lua:936
+#: rssreader_menu_utils.lua:938 rssreader_story_viewer.lua:32
+msgid "Untitled story"
+msgstr "Artículo sin título"
+
+#: rssreader_menu_utils.lua:518
+msgid "NEW"
+msgstr "NUEVO"
+
+#: rssreader_menu_utils.lua:1213
+#, c-format
+msgid "Sanitizer rate-limited; retrying in %1 s…"
+msgstr "Depurador limitado; reintentando en %1 s…"
+
+#: rssreader_menu_utils.lua:1230
+#, c-format
+msgid "Downloading image %1 / %2 …"
+msgstr "Descargando imagen %1 / %2 …"
+
+#: rssreader_menu_utils.lua:1265
+msgid "Preparing images…"
+msgstr "Preparando imágenes…"
+
+#: rssreader_menu_utils.lua:1334
+msgid "Downloading article…"
+msgstr "Descargando artículo…"
+
+#: rssreader_menu_utils.lua:1366
+#, c-format
+msgid "Trying sanitizer (%1)…"
+msgstr "Probando depurador (%1)…"
+
+#: rssreader_menu_utils.lua:1426
+#, c-format
+msgid "FiveFilters (RapidAPI): the %1 requests for this month are used up. Falling back to the other sanitizers until next month."
+msgstr "FiveFilters (RapidAPI): se agotaron las %1 solicitudes de este mes. Se usarán los otros depuradores hasta el mes que viene."
+
+#: rssreader_menu_utils.lua:1566
+#, c-format
+msgid ""
+"Opening from RSS Reader cache:\n"
+"%s"
+msgstr ""
+"Abriendo desde la caché de RSS Reader:\n"
+"%s"
+
+#: rssreader_menu_utils.lua:1767
+#, c-format
+msgid ""
+"EPUB saved to:\n"
+"%s"
+msgstr ""
+"EPUB guardado en:\n"
+"%s"
+
+#: rssreader_menu_utils.lua:1788
+msgid "Failed to save HTML file"
+msgstr "Error al guardar el archivo HTML"
+
+#: rssreader_menu_utils.lua:1798
+#, c-format
+msgid ""
+"HTML saved to:\n"
+"%s"
+msgstr ""
+"HTML guardado en:\n"
+"%s"
+
+#: rssreader_menu_utils.lua:1843
+msgid "The offline database was damaged and has been recreated."
+msgstr "La base de datos sin conexión estaba dañada y se ha vuelto a crear."
+
+#: rssreader_menu_utils.lua:1845
+#, c-format
+msgid "%d unsent change(s) were lost."
+msgstr "Se perdieron %d cambio(s) sin enviar."
+
+#: rssreader_reader_return.lua:82
+msgid "Top left"
+msgstr "Arriba a la izquierda"
+
+#: rssreader_reader_return.lua:83
+msgid "Top right"
+msgstr "Arriba a la derecha"
+
+#: rssreader_reader_return.lua:84
+msgid "Bottom left"
+msgstr "Abajo a la izquierda"
+
+#: rssreader_reader_return.lua:85
+msgid "Bottom right"
+msgstr "Abajo a la derecha"
+
+#: rssreader_reader_return.lua:456
+msgid ""
+"You've reached the end of the article.\n"
+"What would you like to do?"
+msgstr ""
+"Has llegado al final del artículo.\n"
+"¿Qué quieres hacer?"
+
+#: rssreader_reader_return.lua:460
+msgid "Back to RSS list"
+msgstr "Volver a la lista RSS"
+
+#: rssreader_reader_return.lua:468 rssreader_story_viewer.lua:387 rssreader_ui_model.lua:695
+msgid "Next"
+msgstr "Siguiente"
+
+#: rssreader_reader_return.lua:476 rssreader_story_viewer.lua:404 rssreader_ui_model.lua:694
+msgid "Next unread"
+msgstr "Siguiente no leído"
+
+#: rssreader_reader_return.lua:486
+msgid "Go to beginning"
+msgstr "Ir al principio"
+
+#: rssreader_reader_return.lua:495
+msgid "File browser"
+msgstr "Explorador de archivos"
+
+#: rssreader_reader_return.lua:585
+msgid "Tap the RSS button to go back to your feed list."
+msgstr "Toca el botón RSS para volver a tu lista de feeds."
+
+#: rssreader_reader_return.lua:587
+msgid "Tap the corner to go back to your feed list."
+msgstr "Toca la esquina para volver a tu lista de feeds."
+
+#: rssreader_reader_return.lua:589
+msgid "Press Back to return to your feed list."
+msgstr "Pulsa Atrás para volver a tu lista de feeds."
+
+#: rssreader_reader_return.lua:649
+msgid "Corner"
+msgstr "Esquina"
+
+#: rssreader_reader_return.lua:676
+msgid "Enabled"
+msgstr "Activado"
+
+#: rssreader_reader_return.lua:677
+msgid "Show floating button"
+msgstr "Mostrar botón flotante"
+
+#: rssreader_reader_return.lua:678
+msgid "Corner tap returns to the list"
+msgstr "Tocar la esquina vuelve a la lista"
+
+#: rssreader_reader_return.lua:679
+#, c-format
+msgid "Corner: %s"
+msgstr "Esquina: %s"
+
+#: rssreader_reader_return.lua:685
+msgid "Ask at end of article"
+msgstr "Preguntar al final del artículo"
+
+#: rssreader_reader_return.lua:686
+msgid "Back key returns to the list"
+msgstr "La tecla Atrás vuelve a la lista"
+
+#: rssreader_readers.lua:159
+msgid "The article could not be written to the cache folder."
+msgstr "No se pudo escribir el artículo en la carpeta de caché."
+
+#: rssreader_story_viewer.lua:270
+#, c-format
+msgid "Original link: %s"
+msgstr "Enlace original: %s"
+
+#: rssreader_story_viewer.lua:291
+msgid "Keep unread"
+msgstr "Mantener no leído"
+
+#: rssreader_story_viewer.lua:317
+msgid "Remove from List"
+msgstr "Quitar de la lista"
+
+#: rssreader_story_viewer.lua:375 rssreader_ui_model.lua:693
+msgid "Previous"
+msgstr "Anterior"
+
+#: rssreader_story_viewer.lua:601 rssreader_ui_tree.lua:243
+msgid "Loading article…"
+msgstr "Cargando artículo…"
+
+#: rssreader_story_viewer.lua:611 rssreader_story_viewer.lua:619
+msgid "Could not open story."
+msgstr "No se pudo abrir el artículo."
+
+#: rssreader_story_viewer.lua:691
+msgid "Connecting to download images..."
+msgstr "Conectando para descargar imágenes..."
+
+#: rssreader_ui_article.lua:105
+msgid "The full text is not in the cache. Sync again to load it."
+msgstr "El texto completo no está en la caché. Sincroniza de nuevo para cargarlo."
+
+#: rssreader_ui_cards.lua:271 rssreader_ui_cards.lua:331
+msgid "Copy link"
+msgstr "Copiar enlace"
+
+#: rssreader_ui_cards.lua:274 rssreader_ui_cards.lua:333
+msgid "Link copied to clipboard"
+msgstr "Enlace copiado al portapapeles"
+
+#: rssreader_ui_cards.lua:277 rssreader_ui_cards.lua:335
+msgid "QR code"
+msgstr "Código QR"
+
+#: rssreader_ui_cards.lua:306 rssreader_ui_model.lua:698
+msgid "Mark unread"
+msgstr "Marcar no leído"
+
+#: rssreader_ui_cards.lua:306 rssreader_ui_model.lua:698
+msgid "Mark read"
+msgstr "Marcar leído"
+
+#: rssreader_ui_cards.lua:310
+msgid "Save as EPUB"
+msgstr "Guardar como EPUB"
+
+#: rssreader_ui_cards.lua:311
+msgid "Remove from cache"
+msgstr "Quitar de la caché"
+
+#: rssreader_ui_cards.lua:318
+msgid "Reload article"
+msgstr "Recargar artículo"
+
+#: rssreader_ui_chrome.lua:428
+msgid "End of article"
+msgstr "Fin del artículo"
+
+#: rssreader_ui_model.lua:61
+msgid "now"
+msgstr "ahora"
+
+#: rssreader_ui_model.lua:167 rssreader_ui_model.lua:168
+msgid "All unread"
+msgstr "Todos los no leídos"
+
+#: rssreader_ui_model.lua:171 rssreader_ui_model.lua:172
+msgid "Today"
+msgstr "Hoy"
+
+#: rssreader_ui_model.lua:204 rssreader_ui_model.lua:205 rssreader_ui_model.lua:261
+msgid "All accounts"
+msgstr "Todas las cuentas"
+
+#: rssreader_ui_model.lua:213
+#, c-format
+msgid "All in %s"
+msgstr "Todo en %s"
+
+#: rssreader_ui_model.lua:375
+#, c-format
+msgid "downloading %d files"
+msgstr "descargando %d archivos"
+
+#: rssreader_ui_model.lua:376
+#, c-format
+msgid "looking up %d pages"
+msgstr "consultando %d páginas"
+
+#: rssreader_ui_model.lua:385
+msgid "Sending changes"
+msgstr "Enviando cambios"
+
+#: rssreader_ui_model.lua:385
+msgid "Loading feeds"
+msgstr "Cargando feeds"
+
+#: rssreader_ui_model.lua:386
+msgid "Loading articles"
+msgstr "Cargando artículos"
+
+#: rssreader_ui_model.lua:386
+msgid "Loading images"
+msgstr "Cargando imágenes"
+
+#: rssreader_ui_model.lua:387
+msgid "Loading article list"
+msgstr "Cargando lista de artículos"
+
+#: rssreader_ui_model.lua:392
+#, c-format
+msgid "Loading articles %d–%d of %d"
+msgstr "Cargando artículos %d–%d de %d"
+
+#: rssreader_ui_model.lua:655
+#, c-format
+msgid "%d min read"
+msgstr "%d min de lectura"
+
+#: rssreader_ui_model.lua:821
+#, c-format
+msgid "%d min left in article"
+msgstr "Quedan %d min en el artículo"
+
+#: rssreader_ui_model.lua:823
+#, c-format
+msgid "%d%% read"
+msgstr "%d %% leído"
+
+#: rssreader_ui_model.lua:825
+#, c-format
+msgid "Article %d of %d"
+msgstr "Artículo %d de %d"
+
+#: rssreader_ui_model.lua:827
+#, c-format
+msgid "Page %d of %d"
+msgstr "Página %d de %d"
+
+#: rssreader_ui_model.lua:1042
+msgid "Offline: nothing synced"
+msgstr "Sin conexión: nada sincronizado"
+
+#: rssreader_ui_model.lua:1046
+#, c-format
+msgid "%d of %d feeds updated, %d failed"
+msgstr "%d de %d feeds actualizados, %d con errores"
+
+#: rssreader_ui_model.lua:1049
+msgid "All up to date"
+msgstr "Todo al día"
+
+#: rssreader_ui_model.lua:1052
+#, c-format
+msgid "Login failed: %s"
+msgstr "Error de inicio de sesión: %s"
+
+#: rssreader_ui_model.lua:1055
+msgid "Network error: sync interrupted. The next sync continues."
+msgstr "Error de red: sincronización interrumpida. La próxima sincronización continuará."
+
+#: rssreader_ui_model.lua:1058
+msgid "Network lost: some images were skipped. The next sync loads them."
+msgstr "Red perdida: se omitieron algunas imágenes. La próxima sincronización las cargará."
+
+#: rssreader_ui_model.lua:1061 rssreader_ui_tree.lua:763
+msgid "Device storage is full. Sync stopped."
+msgstr "El almacenamiento del dispositivo está lleno. Sincronización detenida."
+
+#: rssreader_ui_model.lua:1064
+msgid "The cache is full: some images were not loaded."
+msgstr "La caché está llena: algunas imágenes no se cargaron."
+
+#: rssreader_ui_model.lua:1067
+msgid "Sync cancelled."
+msgstr "Sincronización cancelada."
+
+#: rssreader_ui_reader.lua:563
+msgid "Dictionary lookup is not available here."
+msgstr "La búsqueda en el diccionario no está disponible aquí."
+
+#: rssreader_ui_reader.lua:578
+msgid "Dictionary"
+msgstr "Diccionario"
+
+#: rssreader_ui_reader.lua:579
+msgid "Wikipedia"
+msgstr "Wikipedia"
+
+#: rssreader_ui_reader.lua:607
+msgid "No more unread articles"
+msgstr "No hay más artículos no leídos"
+
+#: rssreader_ui_reader.lua:639
+msgid "Default (serif)"
+msgstr "Predeterminada (serif)"
+
+#: rssreader_ui_reader.lua:659 rssreader_ui_reader.lua:683
+msgid "Font"
+msgstr "Fuente"
+
+#: rssreader_ui_reader.lua:684
+#, c-format
+msgid "Font size: %d"
+msgstr "Tamaño de fuente: %d"
+
+#: rssreader_ui_reader.lua:685
+msgid "Font size"
+msgstr "Tamaño de fuente"
+
+#: rssreader_ui_reader.lua:687
+#, c-format
+msgid "Line spacing: %.1f"
+msgstr "Interlineado: %.1f"
+
+#: rssreader_ui_reader.lua:688
+msgid "Line spacing (x10)"
+msgstr "Interlineado (x10)"
+
+#: rssreader_ui_reader.lua:690
+#, c-format
+msgid "Top margin: %d"
+msgstr "Margen superior: %d"
+
+#: rssreader_ui_reader.lua:691
+msgid "Top margin"
+msgstr "Margen superior"
+
+#: rssreader_ui_reader.lua:695
+#, c-format
+msgid "Footer buttons: %s"
+msgstr "Botones inferiores: %s"
+
+#: rssreader_ui_reader.lua:695 rssreader_ui_settings.lua:39
+msgid "on"
+msgstr "activado"
+
+#: rssreader_ui_reader.lua:695 rssreader_ui_settings.lua:39
+msgid "off"
+msgstr "desactivado"
+
+#: rssreader_ui_reader.lua:708
+msgid "Brightness"
+msgstr "Brillo"
+
+#: rssreader_ui_reader.lua:710
+msgid "Reader settings"
+msgstr "Ajustes del lector"
+
+#: rssreader_ui_settings.lua:28
+msgid "Preload"
+msgstr "Precarga"
+
+#: rssreader_ui_settings.lua:28
+msgid "Cache only"
+msgstr "Solo caché"
+
+#: rssreader_ui_settings.lua:29
+msgid "Large"
+msgstr "Grande"
+
+#: rssreader_ui_settings.lua:29
+msgid "Compact"
+msgstr "Compacto"
+
+#: rssreader_ui_settings.lua:29
+msgid "Text"
+msgstr "Texto"
+
+#: rssreader_ui_settings.lua:29
+msgid "Minimal"
+msgstr "Mínimo"
+
+#: rssreader_ui_settings.lua:33
+msgid "unlimited"
+msgstr "ilimitado"
+
+#: rssreader_ui_settings.lua:35
+#, c-format
+msgid "%d MB"
+msgstr "%d MB"
+
+#: rssreader_ui_settings.lua:58
+msgid "Quick reader"
+msgstr "Lector rápido"
+
+#: rssreader_ui_settings.lua:58
+msgid "KOReader reader"
+msgstr "Lector de KOReader"
+
+#: rssreader_ui_settings.lua:62 rssreader_ui_settings.lua:71
+msgid "Open articles in"
+msgstr "Abrir artículos en"
+
+#: rssreader_ui_settings.lua:93
+#, c-format
+msgid "Card font size: %d"
+msgstr "Tamaño de fuente de tarjetas: %d"
+
+#: rssreader_ui_settings.lua:94 rssreader_ui_settings.lua:176 rssreader_ui_tree.lua:943
+msgid "Display"
+msgstr "Visualización"
+
+#: rssreader_ui_settings.lua:96 rssreader_ui_settings.lua:182 rssreader_ui_settings.lua:183
+msgid "Card font size"
+msgstr "Tamaño de fuente de tarjetas"
+
+#: rssreader_ui_settings.lua:126
+msgid "Offline reader settings"
+msgstr "Ajustes del lector sin conexión"
+
+#: rssreader_ui_settings.lua:128 rssreader_ui_settings.lua:129
+msgid "Mode"
+msgstr "Modo"
+
+#: rssreader_ui_settings.lua:133 rssreader_ui_settings.lua:138
+msgid "Max. cache size"
+msgstr "Tamaño máx. de caché"
+
+#: rssreader_ui_settings.lua:140
+msgid "Articles per feed"
+msgstr "Artículos por feed"
+
+#: rssreader_ui_settings.lua:141
+msgid "Articles per feed (with images)"
+msgstr "Artículos por fuente (con imágenes)"
+
+#: rssreader_ui_settings.lua:144
+msgid "Block size"
+msgstr "Tamaño de bloque"
+
+#: rssreader_ui_settings.lua:149
+msgid "Block size (cache only)"
+msgstr "Tamaño de bloque (solo caché)"
+
+#: rssreader_ui_settings.lua:153
+msgid "Sync everything"
+msgstr "Sincronizar todo"
+
+#: rssreader_ui_settings.lua:156
+msgid "Thumbnails"
+msgstr "Miniaturas"
+
+#: rssreader_ui_settings.lua:157
+msgid "Article images"
+msgstr "Imágenes del artículo"
+
+#: rssreader_ui_settings.lua:160
+msgid "Fetch preview image from article page"
+msgstr "Obtener imagen de vista previa de la página"
+
+#: rssreader_ui_settings.lua:163 rssreader_ui_settings.lua:164
+msgid "Parallel downloads"
+msgstr "Descargas en paralelo"
+
+#: rssreader_ui_settings.lua:168
+msgid "Image proxy"
+msgstr "Proxy de imágenes"
+
+#: rssreader_ui_settings.lua:169
+msgid "Set image_proxy in rssreader_configuration.lua to let your imgproxy server resize images and convert them to JPEG before they are downloaded."
+msgstr "Configura image_proxy en rssreader_configuration.lua para que tu servidor imgproxy redimensione las imágenes y las convierta a JPEG antes de descargarlas."
+
+#: rssreader_ui_settings.lua:172 rssreader_ui_settings.lua:173
+msgid "Keep read articles"
+msgstr "Conservar artículos leídos"
+
+#: rssreader_ui_settings.lua:172
+#, c-format
+msgid "%d days"
+msgstr "%d días"
+
+#: rssreader_ui_settings.lua:173
+msgid "days"
+msgstr "días"
+
+#: rssreader_ui_tree.lua:209
+msgid "Article not loaded."
+msgstr "Artículo no cargado."
+
+#: rssreader_ui_tree.lua:289
+msgid "Only articles of a server account can be reloaded."
+msgstr "Solo se pueden recargar artículos de una cuenta de servidor."
+
+#: rssreader_ui_tree.lua:328
+#, c-format
+msgid "%d article(s) reloaded, the rest failed."
+msgstr "%d artículo(s) recargado(s), el resto falló."
+
+#: rssreader_ui_tree.lua:329
+#, c-format
+msgid "%d article(s) reloaded."
+msgstr "%d artículo(s) recargado(s)."
+
+#: rssreader_ui_tree.lua:679
+msgid "More articles load when Wi-Fi is on."
+msgstr "Más artículos se cargan con el Wi-Fi activado."
+
+#: rssreader_ui_tree.lua:682
+msgid "No articles. Tap the sync icon to load some."
+msgstr "No hay artículos. Toca el icono de sincronización para cargarlos."
+
+#: rssreader_ui_tree.lua:791
+msgid "No stored articles to reload."
+msgstr "No hay artículos guardados para recargar."
+
+#: rssreader_ui_tree.lua:795
+#, c-format
+msgid "Reload %d article(s) in '%s' from the server?"
+msgstr "¿Recargar %d artículo(s) de «%s» desde el servidor?"
+
+#: rssreader_ui_tree.lua:849
+#, c-format
+msgid "Mark %d article(s) in '%s' as read?"
+msgstr "¿Marcar %d artículo(s) de '%s' como leído(s)?"
+
+#: rssreader_ui_tree.lua:881
+msgid "Delete all cached articles and images? Starred articles and unsent changes are kept."
+msgstr "¿Borrar todos los artículos e imágenes en caché? Se conservan los favoritos y los cambios sin enviar."
+
+#: rssreader_ui_tree.lua:912
+msgid "Import OPML"
+msgstr "Importar OPML"
+
+#: rssreader_ui_tree.lua:913
+msgid "Export OPML"
+msgstr "Exportar OPML"
+
+#: rssreader_ui_tree.lua:917
+#, c-format
+msgid "Local feeds: %s (classic view)"
+msgstr "Feeds locales: %s (vista clásica)"
+
+#: rssreader_ui_tree.lua:923
+msgid "Manage feeds"
+msgstr "Gestionar feeds"
+
+#: rssreader_ui_tree.lua:942
+msgid "Synchronize"
+msgstr "Sincronizar"
+
+#: rssreader_ui_tree.lua:944
+msgid "Mark all in current path as read"
+msgstr "Marcar todo en la ruta actual como leído"
+
+#: rssreader_ui_tree.lua:945
+msgid "Reload articles in current path"
+msgstr "Recargar artículos de la ruta actual"
+
+#: rssreader_ui_tree.lua:946
+msgid "Manage feeds / OPML"
+msgstr "Gestionar feeds / OPML"
+
+#: rssreader_ui_tree.lua:951
+msgid "Classic view"
+msgstr "Vista clásica"
+
+#: rssreader_ui_tree.lua:955
+msgid "Quit"
+msgstr "Salir"
+
+#: rssreader_ui_tree.lua:984
+msgid "The offline database could not be opened."
+msgstr "No se pudo abrir la base de datos sin conexión."
+
+#: rssreader_ui_tree.lua:990
+msgid "No account with offline support (FreshRSS or local feeds) is active."
+msgstr "No hay ninguna cuenta activa con soporte sin conexión (FreshRSS o feeds locales)."

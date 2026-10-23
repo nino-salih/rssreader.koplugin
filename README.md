@@ -282,6 +282,14 @@ The exported OPML file includes:
 
 **Note**: Only local accounts are included in the export. NewsBlur, CommaFeed, FreshRSS, and Miniflux accounts are managed by their respective services and are not exported.
 
+## Languages
+The plugin follows KOReader's interface language. It has its own translations for German, English, French and Spanish in `l10n/<language>/rssreader.po`. Texts without a translation there use KOReader's own translation, or stay in English.
+
+To add or update a language:
+1. Run `python l10n/update.py`. It collects all texts of the plugin into `l10n/rssreader.pot` and adds new texts to every `rssreader.po` file.
+2. For a new language, first create `l10n/<code>/rssreader.po` (copy the header of an existing file and change `Language`), then run the script.
+3. Fill in the empty `msgstr` entries. Keep placeholders such as `%d`, `%s` and `%1` unchanged.
+
 ## Ready-to-Use Defaults
 - If you need a template, use `rssreader_configuration.sample.lua` and rename it to `rssreader_configuration.lua` after customizing.
 - The "Sample" and "Tech Blogs" groups in `rssreader_local_defaults.sample.lua` give you starting points. Rename the file to `rssreader_local_defaults.lua` once you finish editing.
