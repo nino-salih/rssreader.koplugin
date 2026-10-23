@@ -3,25 +3,25 @@ Quick reader pages that keep paragraphs together (spec 2026-10-08, section 8.4).
 Pure: HTML and the page layout in, HTML out.
 
 MuPDF (KOReader v2026.07.1) ignores page-break-inside, break-inside, orphans,
-widows and page-break-after: avoid, but it never breaks a table row that fits
-on a page: a row that does not fit in the rest of the page moves to the next
+widows and page-break-after: avoid. But it never breaks a table row that fits
+on a page. A row that does not fit in the rest of the page moves to the next
 one. So the article HTML gets CSS one-row tables (div display: table / table-row
 / table-cell, Pages.CSS) and MuPDF's own pagination does the rest:
 
-1. every short paragraph (p, simple li) is one row: a page ends after the last
-   paragraph that fits;
-2. headings share the row of the following paragraph (or small list or quote):
-   they never end a page;
-3. a paragraph longer than half a page becomes one row per group of sentences
+1. Every short paragraph (p, simple li) is one row: a page ends after the last
+   paragraph that fits.
+2. Headings share the row of the following paragraph (or small list or quote):
+   they never end a page.
+3. A paragraph longer than half a page becomes one row per group of sentences
    (a quarter page, at least MIN_GROUP_LINES lines): it breaks at a sentence
    end. Each group ends with a short line, so groups are not smaller. A sentence
    longer than half a page, or a paragraph without sentence ends, stays plain
-   text that MuPDF breaks at the last full line;
-4. images are never put into a row (MuPDF moves them whole to the next page).
+   text that MuPDF breaks at the last full line.
+4. Images never go into a row (MuPDF moves them whole to the next page).
 
 A row taller than a page would leave a blank page, so rows stay below half a
 page by the estimate (estimateHeight overestimates the text). Tables, pre and
-media are passed through untouched.
+media pass through untouched.
 ]]
 
 local Pages = {}
@@ -39,12 +39,12 @@ local function set(list)
     return result
 end
 
--- Tags allowed inside a paragraph that is put into a row (no images, no blocks).
+-- Tags allowed inside a paragraph that goes into a row (no images, no blocks).
 local INLINE = set({ "a", "abbr", "b", "bdi", "bdo", "big", "br", "cite", "code", "data", "del", "dfn", "em",
     "font", "i", "ins", "kbd", "mark", "nobr", "q", "s", "samp", "small", "span", "strike", "strong", "sub",
     "sup", "time", "tt", "u", "var", "wbr" })
 local VOID = set({ "br", "wbr" })
--- Elements whose content is passed through untouched.
+-- Elements whose content passes through untouched.
 local SKIP = set({ "pre", "table", "svg", "math", "script", "style", "textarea", "select", "object", "video",
     "audio", "iframe" })
 -- Never inside a row: MuPDF moves them whole by itself, and a row taller than a page breaks badly.
@@ -63,9 +63,9 @@ local ABBREVIATIONS = set({ "mr", "mrs", "ms", "dr", "prof", "st", "nr", "no", "
 
 --- CSS of the rows (quick reader only). The row (div) carries the block margins
 -- of the quick reader (Article.css: p 0.6em, headings 0.8em of their own size,
--- lists 0.5em), since margins inside a cell do not collapse with the outside but
--- the margins of the table divs do. MuPDF matches no :first-child, so the blocks
--- in a cell are marked: keep-in (no vertical margins), keep-after (not the first).
+-- lists 0.5em). The reason: margins inside a cell do not collapse with the outside,
+-- but the margins of the table divs do. MuPDF matches no :first-child, so this module
+-- marks the blocks in a cell: keep-in (no vertical margins), keep-after (not the first).
 Pages.CSS = [[
 .keep { display: table; width: 100%; }
 .keep-row { display: table-row; }
@@ -132,7 +132,7 @@ local function render(tokens, first, last)
     return table.concat(parts)
 end
 
--- Index of the end tag of tokens[i] (same name, nesting counted); the last token if none.
+-- Index of the end tag of tokens[i] (same name, counts nesting), or the last token if none.
 local function closeOf(tokens, i)
     local name, depth = tokens[i].name, 0
     for k = i, #tokens do
@@ -148,7 +148,7 @@ local function closeOf(tokens, i)
 end
 
 -- The element at tokens[i] when it holds inline content only:
--- { open, inner, close, last }; nil for blocks, images or a missing end tag.
+-- { open, inner, close, last }, or nil for blocks, images or a missing end tag.
 local function leaf(tokens, i)
     local name = tokens[i].name
     for k = i + 1, #tokens do
@@ -195,7 +195,7 @@ local function startsWith(s, list)
 end
 
 --- Whether `word` ends a sentence when `next_word` follows: . ! ? or the
--- ellipsis, also before closing quotes and brackets; not before a lower-case
+-- ellipsis, also before closing quotes and brackets. Not before a lower-case
 -- word, not after a number, an initial or an abbreviation.
 function Pages.isSentenceEnd(word, next_word)
     if not word then
@@ -240,8 +240,8 @@ local function sentenceCuts(tokens)
     return cuts
 end
 
---- The sentences of a paragraph's inline HTML, each one balanced: inline tags
--- open at a cut are closed before it and reopened after it.
+--- The sentences of a paragraph's inline HTML, each one balanced: an inline tag
+-- that is open at a cut closes before it and opens again after it.
 function Pages.sentences(inline_html)
     local tokens = tokenize(inline_html)
     local cuts = sentenceCuts(tokens)
@@ -307,7 +307,7 @@ local function isWide(char)
 end
 
 --- Estimated height in px of inline HTML (or a small block: every end of a
--- paragraph or list item starts a line) in a block of the text width;
+-- paragraph or list item starts a line) in a block of the text width.
 -- size: font size factor (headings). layout: { text_w, font_px, line_h }.
 function Pages.estimateHeight(inline_html, layout, size)
     size = size or 1
@@ -366,8 +366,8 @@ local function maxRow(layout)
     return layout.page_h * MAX_ROW_PAGE
 end
 
--- Sentences joined to groups of at least a quarter page; a group that does not fit
--- in a row (one very long sentence) is marked plain: { html, row }.
+-- Sentences joined to groups of at least a quarter page. A group that does not fit
+-- in a row (one very long sentence) has row = false (plain): { html, row }.
 local function sentenceGroups(sentences, layout)
     local min_h = math.max(MIN_GROUP_LINES * layout.line_h, layout.page_h * MIN_GROUP_PAGE)
     local max_h = maxRow(layout)
@@ -408,7 +408,7 @@ local function headingClasses(run)
     return run and " keep-" .. run.name or ""
 end
 
--- A paragraph (after a heading run) as rows; nil leaves it to MuPDF.
+-- A paragraph (after a heading run) as rows, or nil to leave it to MuPDF.
 local function paragraphRows(p, run, layout)
     local before = run and run.html or ""
     if Pages.estimateHeight(p.inner, layout) <= maxRow(layout) then
@@ -469,7 +469,7 @@ local function headingRun(tokens, i)
 end
 
 -- A block after a heading that fits in its row: no images or media, at most
--- half a page; { html, last } or nil.
+-- half a page. Returns { html, last } or nil.
 local function smallBlock(tokens, k, layout)
     local t = tokens[k]
     if not (t and t.name and not t.closing) or INLINE[t.name] or HEADING_SIZE[t.name] then
@@ -492,7 +492,7 @@ local function smallBlock(tokens, k, layout)
 end
 
 -- The rows for a heading run: with the next paragraph or small block, else alone
--- (so its lines at least stay together); { html, last }.
+-- (so its lines at least stay together). Returns { html, last }.
 local function headingRows(tokens, i, layout)
     local run = headingRun(tokens, i)
     if not run then
@@ -544,7 +544,7 @@ local function blockAt(tokens, i, layout)
 end
 
 --- The article HTML with keep rows (see the module comment). layout: { page_h,
--- text_w, font_px, line_h } in px of the quick reader's page; nil = unchanged.
+-- text_w, font_px, line_h } in px of the quick reader's page. nil = unchanged.
 function Pages.keepTogether(html, layout)
     if not layout then
         return html

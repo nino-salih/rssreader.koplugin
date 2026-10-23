@@ -1,9 +1,9 @@
 -- Minimal stand-ins for the KOReader modules the data core needs.
--- Loaded by busted as --helper (see spec/run.sh) before any spec file.
+-- busted loads this file as --helper (see spec/run.sh) before any spec file.
 
 local ffi = require("ffi")
 
--- KOReader adds ffi.loadlib; lua-ljsqlite3 uses it to find the system libsqlite3.
+-- KOReader adds ffi.loadlib. lua-ljsqlite3 uses it to find the system libsqlite3.
 if not ffi.loadlib then
     ffi.loadlib = function(name, version)
         local ok, lib = pcall(ffi.load, "lib" .. name .. ".so." .. tostring(version))
@@ -25,7 +25,7 @@ local function makeTempDir()
     return path
 end
 
--- One data dir per spec run; specs that need isolation create sub folders.
+-- One data dir per spec run. Specs that need isolation create sub folders.
 local data_dir = makeTempDir()
 
 local logger = { lines = {} }
@@ -224,8 +224,8 @@ for name, loader in pairs(stubs) do
     package.preload[name] = loader
 end
 
--- Load the FFI binding once, here: busted insulates spec files and would re-require
--- it per file, but ffi.cdef/ffi.metatype cannot be redefined in one LuaJIT state.
+-- Load the FFI binding once, here: busted insulates spec files and would require
+-- it again per file, but ffi.cdef/ffi.metatype cannot redefine a type in one LuaJIT state.
 require("lua-ljsqlite3/init")
 
 -- Shared test helpers.

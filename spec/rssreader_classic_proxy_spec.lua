@@ -1,7 +1,7 @@
 -- Block 15: the classic view ("Save as EPUB"/save story, story preview) downloads
 -- its images through the image proxy of the configuration, like the sync.
--- downloadAndRewrite is stubbed: these specs only check what the call sites hand
--- it (no network). The download behaviour itself is in rssreader_image_proxy_spec.
+-- downloadAndRewrite is a stub: these specs only check what the call sites give
+-- it (no network). The download behavior itself is in rssreader_image_proxy_spec.
 local helpers = require("spec_helpers")
 
 -- Any table that tolerates indexing and calls (KOReader UI modules).
@@ -23,7 +23,7 @@ for _, name in ipairs({ "rssreader_html_resources", "rssreader_html_sanitizer", 
     package.loaded[name] = nil
 end
 
--- package.loaded is restored by busted after this file, so nothing below leaks.
+-- busted restores package.loaded after this file, so nothing below leaks.
 local util = {}
 for k, v in pairs(require("util")) do
     util[k] = v
@@ -151,7 +151,7 @@ describe("classic view image proxy", function()
         local function preview(options)
             local story = { title = "S", link = "https://site.example/story",
                 content = '<p><img src="https://site.example/a.png"></p>' }
-            -- The viewer builds KOReader widgets after the download; those are not
+            -- The viewer builds KOReader widgets after the download. Those are not
             -- part of this spec.
             pcall(StoryViewer._showStoryNow, StoryViewer:new(), story, nil, nil, options)
         end

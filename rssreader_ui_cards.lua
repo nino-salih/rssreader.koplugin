@@ -5,7 +5,7 @@ large / compact / text / minimal (all but minimal with a snippet), unread bold, 
 Portions adapted from quickrss.koplugin (MIT, (c) 2026 qewer33):
 card layout and thumbnail cover scaling (modules/ui/article_item.lua).
 
-Data never comes from here: the caller passes view models built with
+This module never loads data: the caller passes view models built with
 rssreader_ui_model.cardViewModel (a page = pure list of view models).
 ]]
 
@@ -39,8 +39,8 @@ local Screen = Device.screen
 
 local Cards = {}
 
--- Explicit cache: image path -> cover scale factor. Probing an image means
--- decoding it; this keeps it to once per image per session.
+-- Explicit cache: image path -> cover scale factor. To probe an image, the code
+-- must decode it. This cache keeps that to once per image per session.
 local cover_scale_cache = {}
 
 -- Hierarchy by size and weight (e-ink): title largest (bold = unread),
@@ -81,7 +81,7 @@ function Cards.layout(style, font_size, width)
     if style == "minimal" then
         layout.height = math.max(lineHeight(f.title), meta_h) + 2 * pad -- still a usable touch target
     elseif style == "compact" then
-        -- Small 4:3 image as high as title and meta; the snippet (2 lines) runs below.
+        -- Small 4:3 image as high as title and meta. The snippet (2 lines) runs below.
         layout.snippet_h = 2 * lineHeight(f.snippet)
         layout.thumb_h = title_h + gap + meta_h
         layout.thumb_w = math.floor(layout.thumb_h * 4 / 3)
@@ -139,7 +139,7 @@ end
 -- Same size as a thumbnail: thin black frame, the feed's first letter large and black.
 local function placeholder(initial, w, h)
     local border = Size.border.thin
-    -- Font:getFace scales the size for the screen; aim at about half the slot height.
+    -- Font:getFace scales the size for the screen. Aim at about half the slot height.
     local size = math.max(Model.MIN_FONT_SIZE, math.floor(h * 0.5 / (Screen:scaleBySize(100) / 100)))
     return FrameContainer:new{
         padding = 0, margin = 0, bordersize = border, color = COLOR.border, background = COLOR.background,
@@ -285,7 +285,7 @@ end
 
 --- Hold menu of an article (also the reader's title tap).
 -- ctx: setStatus(article, action), saveEpub(article), removeArticle(article).
--- on_done(what) is called after a change ("status" | "removed").
+-- The menu calls on_done(what) after a change ("status" | "removed").
 function Cards.showArticleMenu(ctx, article, on_done)
     local dialog
     local function run(fn, what)
@@ -312,8 +312,8 @@ function Cards.showArticleMenu(ctx, article, on_done)
         },
     }
     if ctx.reloadArticles then
-        -- Fresh from the server (e.g. after the feed was fixed in FreshRSS); it
-        -- loads in the background, on_done follows when it is stored.
+        -- Fresh from the server (e.g. after a fix of the feed in FreshRSS). It
+        -- loads in the background. on_done follows when the store has it.
         table.insert(buttons, {
             { text = _("Reload article"), callback = function()
                 Chrome.replaceDialog(dialog, function()

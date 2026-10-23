@@ -163,7 +163,7 @@ function Common.escapeHtml(text)
     return (tostring(text or ""):gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub('"', "&quot;"))
 end
 
---- Decodes a JSON text (KOReader common/json, either API shape); nil unless it is an object/array.
+--- Decodes a JSON text (KOReader common/json, either API shape). Returns nil unless it is an object/array.
 function Common.decodeJson(content)
     if type(content) ~= "string" or content == "" then
         return nil
@@ -192,7 +192,7 @@ function Common.plainText(html)
     return (text:gsub("%s+", " "):gsub("^ ", ""):gsub(" $", ""))
 end
 
---- First `max_chars` characters (UTF-8) of the plain text, "…" when cut; nil when empty.
+--- First `max_chars` characters (UTF-8) of the plain text, "…" when cut, nil when empty.
 function Common.snippet(html, max_chars)
     local text = Common.plainText(html)
     if text == "" then
@@ -215,7 +215,7 @@ end
 
 -- URLs and images -----------------------------------------------------------
 
---- Absolute URL of `src` relative to the page `base`; nil when that is impossible.
+--- Absolute URL of `src` relative to the page `base`, nil when that is impossible.
 function Common.resolveUrl(src, base)
     if type(src) ~= "string" or src == "" then
         return nil
@@ -339,7 +339,7 @@ local function parseRfc822(text)
     return time - offsetSeconds(zone)
 end
 
---- Unix time from a number (s, ms or µs) or an RFC 822 / ISO 8601 string; nil if unknown.
+--- Unix time from a number (s, ms or µs) or an RFC 822 / ISO 8601 string, nil if unknown.
 function Common.parseDate(value)
     local number = tonumber(value)
     if number then
@@ -358,7 +358,7 @@ function Common.parseDate(value)
 end
 
 --- Local midnight of the day of `now` (the "today" filter). Depends on the
--- device's time zone by design (os.date/os.time); `now` is injectable.
+-- device's time zone by design (os.date/os.time). The caller can inject `now`.
 function Common.startOfDay(now)
     local t = os.date("*t", now)
     return os.time({ year = t.year, month = t.month, day = t.day, hour = 0, min = 0, sec = 0 })
@@ -415,7 +415,7 @@ function Common.storyKey(story)
     return tostring(key)
 end
 
---- New list: dated entries newest first, undated ones after them; ties keep their order.
+--- New list: dated entries newest first, undated ones after them. Ties keep their order.
 function Common.sortNewestFirst(list)
     local decorated = {}
     for index, item in ipairs(list or {}) do

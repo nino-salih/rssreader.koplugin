@@ -10,7 +10,7 @@ local function fixture(name)
     return { code = 200, body = assert(helpers.readFile(FIXTURES .. name)) }
 end
 
--- Routes: list of { url fragment, response | function(request) -> response }; first match wins.
+-- Routes: list of { url fragment, response | function(request) -> response }. The first match wins.
 local function serve(routes)
     helpers.http.reset(function(request)
         for _, route in ipairs(routes) do
@@ -201,7 +201,7 @@ describe("rssreader_adapters/freshrss", function()
         assert.truthy(call.url:find("s=feed%2f1", 1, true))
         assert.is_nil(call.url:find("xt=", 1, true))
 
-        -- "All" is unread only by definition; "Today" keeps its start time.
+        -- "All" is unread only by definition. "Today" keeps its start time.
         assert.is_true((adapter.fetchIdList(Common.SPECIAL.today, { unread_only = false, cap = 100 })))
         call = lastCall("/stream/items/ids")
         assert.truthy(call.url:find("ot=" .. string.format("%d", Common.startOfDay(NOW)), 1, true))

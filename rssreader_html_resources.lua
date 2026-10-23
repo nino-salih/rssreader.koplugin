@@ -202,7 +202,7 @@ local IMAGE_TRANSFER_LIMIT = 30
 local MEGABYTE = 1024 * 1024
 
 --- Pure: nil while `bytes` fit `max_bytes` (nil = no cap), else the readable
--- error "too large: 6.5 MB"; `partial` = only `bytes` arrived so far, the
+-- error "too large: 6.5 MB". `partial` = only `bytes` arrived so far, the
 -- real size is unknown ("too large: over 3.0 MB").
 function HtmlResources.sizeError(bytes, max_bytes, partial)
     if not max_bytes or (tonumber(bytes) or 0) <= max_bytes then
@@ -214,10 +214,10 @@ function HtmlResources.sizeError(bytes, max_bytes, partial)
     return string.format("too large: %.1f MB", bytes / MEGABYTE)
 end
 
--- LuaSocket hands a body with a Content-Length to socket.sourcet["by-length"];
--- a sink never sees the headers. Swapping that source for the duration of one
--- request stops a file above `max_bytes` before its first byte. Safe: the
--- request blocks, nothing else runs in this process meanwhile.
+-- LuaSocket gives a body with a Content-Length to socket.sourcet["by-length"].
+-- A sink never sees the headers. We replace that source for the duration of one
+-- request, so a file above `max_bytes` stops before its first byte. Safe: the
+-- request blocks, and nothing else runs in this process meanwhile.
 local function withLengthLimit(max_bytes, request)
     local sources = max_bytes and require("socket").sourcet
     local by_length = type(sources) == "table" and sources["by-length"]
@@ -239,7 +239,7 @@ end
 -- Image downloads are latency-bound: nearly all the time of a single request
 -- is spent waiting for DNS, the TCP/TLS handshake and the remote server, so
 -- fetching N images one after the other costs roughly N times the latency of
--- one. rssreader_parallel fans the work out to a few forked worker processes
+-- one. rssreader_parallel distributes the work to a few forked worker processes
 -- instead. The image bytes never travel through a pipe: every worker writes
 -- straight to the task's file, only the final file name comes back.
 
@@ -247,12 +247,12 @@ end
 -- Optional imgproxy of the user (rssreader_configuration.lua, image_proxy): the
 -- server resizes an image and sends it as JPEG, so the device gets a small file
 -- it can always decode (also AVIF, HEIC, WebP). Only the download goes through
--- it; the source URL stays the identity of the image everywhere else.
+-- it. The source URL stays the identity of the image everywhere else.
 
 -- Default width of article images: the screen width of the Kindle Paperwhite 4.
 HtmlResources.PROXY_WIDTH = 1072
 HtmlResources.PROXY_QUALITY = 70
--- imgproxy gives up on a slow source after about 10 s and answers 503 "Timeout".
+-- imgproxy stops waiting for a slow source after about 10 s and answers 503 "Timeout".
 -- A block timeout above that lets its answer arrive, so silence this long means
 -- the proxy itself hangs.
 local PROXY_BLOCK_TIMEOUT = 15
@@ -284,7 +284,7 @@ end
 
 --- Pure: the proxy of the `image_proxy` config table ({ url, username, password,
 -- width }), or nil when there is none (no or no http(s) url). Returns
--- { url (no trailing slash), host, width (article images; config, else
+-- { url (no trailing slash), host, width (article images: config, else
 -- `screen_width`, else PROXY_WIDTH), auth() -> "Basic ..." | nil (no username) }.
 -- The login hides in a closure: KOReader's logger dumps tables, never this one.
 function HtmlResources.proxyConfig(config, screen_width)
@@ -302,9 +302,9 @@ function HtmlResources.proxyConfig(config, screen_width)
 end
 
 --- The image proxy of the plugin configuration (rssreader_configuration.lua,
--- `image_proxy`; see proxyConfig) with the short side of the device screen as
+-- `image_proxy`, see proxyConfig) with the short side of the device screen as
 -- the article width, or nil. `accounts_module` is the rssreader_accounts
--- instance. Used by the sync and by the classic view.
+-- instance. The sync and the classic view use it.
 function HtmlResources.deviceProxy(accounts_module)
     local config = type(accounts_module) == "table" and type(accounts_module.config) == "table"
         and accounts_module.config.image_proxy
@@ -335,8 +335,8 @@ function HtmlResources.proxyUrl(proxy, source_url, width)
 end
 
 --- Pure: headers of a GET of `url`. The proxy login only goes to the proxy
--- itself: the URL must start with the proxy URL (same scheme, host and port;
--- user info in a source URL cannot fake it).
+-- itself: the URL must start with the proxy URL (same scheme, host and port.
+-- User info in a source URL cannot fake it).
 function HtmlResources.requestHeaders(url, proxy)
     local headers = { ["Accept-Encoding"] = "identity", ["User-Agent"] = "KOReader RSSReader" }
     local base = proxy and proxy.auth and proxy.url:lower() .. "/"
@@ -350,9 +350,9 @@ end
 -- imgproxy answer about this one source (false: that image failed, the proxy
 -- stays)? `code` nil = no HTTP answer. imgproxy marks its answers ("Server:
 -- imgproxy", X-Request-ID) and passes source problems on (404 source missing or
--- host dead, 422 undecodable, 502 source error, 503 source timeout); answers
+-- host dead, 422 undecodable, 502 source error, 503 source timeout). Answers
 -- without the mark come from the reverse proxy in front of it (401 login, 502/503
--- imgproxy down). The size cap stopping a transfer is no proxy failure.
+-- imgproxy down). When the size cap stops a transfer, that is no proxy failure.
 function HtmlResources.proxyDown(code, headers, err)
     if type(err) == "string" and err:find("^too large:") then
         return false
@@ -368,13 +368,13 @@ function HtmlResources.proxyDown(code, headers, err)
     return not marked
 end
 
---- One GET with KOReader's socket timeouts (seconds per block / in total); never raises.
+--- One GET with KOReader's socket timeouts (seconds per block / in total). Never raises.
 -- Returns code, headers, status, or nil, readable error (Common.netMessage, e.g.
 -- "timeout: wantread"), raw error (e.g. the message of an aborting sink).
 -- The one HTTP path of image downloads and the og:image page lookup.
 -- max_bytes (optional): a Content-Length above it stops the request ("too large: 6.5 MB").
--- request_headers (optional, default requestHeaders(url)): with a login, redirects
--- are not followed (LuaSocket would send the login to the redirect target).
+-- request_headers (optional, default requestHeaders(url)): with a login, the request
+-- does not follow redirects (LuaSocket would send the login to the redirect target).
 function HtmlResources.httpGet(url, sink, block_timeout, total_timeout, max_bytes, request_headers)
     local netMessage = require("rssreader_adapters/common").netMessage
     request_headers = request_headers or HtmlResources.requestHeaders(url)
@@ -470,10 +470,10 @@ local function extensionFromContentType(content_type)
 end
 
 -- Download one task to a temporary ".part" file and only then move it to its
--- final name (in the folder of task.image_path). The detour buys us two things:
--- the extension may only be known from the Content-Type header (crengine
--- sniffs image format by extension), and a half-written file is never visible
--- under the name the HTML points at -- which is what lets the parent count
+-- final name (in the folder of task.image_path). The detour gives two advantages:
+-- sometimes only the Content-Type header gives the extension (crengine
+-- detects the image format by extension), and a half-written file is never visible
+-- under the name that the HTML points to. This lets the parent count
 -- finished downloads by listing the directory while the workers are still running.
 -- Through `proxy` (task.width = resize width, default proxy.width) the file is a
 -- JPEG, whatever the source format.
@@ -545,21 +545,21 @@ end
 -- (rssreader_parallel), else one after the other.
 -- images_dir: the one folder of all tasks (progress by listing it), or nil
 -- when the tasks span several folders (sync batches).
--- Returns finished (task -> final file name; missing = failed), cancelled,
+-- Returns finished (task -> final file name, missing = failed), cancelled,
 -- errors (task -> readable error, Common.netMessage) and proxy_error (why the
 -- proxy failed, nil while it worked or without one).
 -- options: workers, progress_callback(i, total), yield_callback(seconds),
 --   on_poll(done, total) -> false cancels, max_bytes (size cap per file, nil = none:
 --   a larger file fails with "too large: 6.5 MB" and leaves nothing behind),
---   proxy (HtmlResources.proxyConfig; task.width = resize width). When the proxy
---   itself fails, that file and every later one of the same worker are
---   downloaded directly; an answer of imgproxy about one source fails that file only.
+--   proxy (HtmlResources.proxyConfig, task.width = resize width). When the proxy
+--   itself fails, the worker downloads that file and every later file directly.
+--   An answer of imgproxy about one source fails that file only.
 function HtmlResources.downloadTasks(tasks, images_dir, options)
     options = options or {}
     local progress_callback = options.progress_callback
     local reported = -1
     local function onPoll(done, total)
-        -- A worker reports its whole bucket at once; the files that have landed
+        -- A worker reports its whole bucket at once. The files that have landed
         -- tell earlier how far the downloads are (on_poll moves the sync dialog).
         done = images_dir and done or math.max(done, landedFiles(tasks))
         if options.on_poll and options.on_poll(done, total) == false then
@@ -568,7 +568,7 @@ function HtmlResources.downloadTasks(tasks, images_dir, options)
         if not progress_callback then
             return true
         end
-        -- Files landed so far; report the next image being worked on.
+        -- Files landed so far. Report the next image in progress.
         local count = images_dir and select(2, listFinishedFiles(images_dir)) or done
         if count == reported then
             return true

@@ -1,8 +1,8 @@
 --[[--
 Translations of the plugin. KOReader's gettext only knows its own catalog, so
 the plugin brings its own: l10n/<language>/rssreader.po next to this file
-(German, English, French, Spanish; template l10n/rssreader.pot, updated with
-l10n/update.py). The file of KOReader's UI language is read once, at the first
+(German, English, French, Spanish). l10n/update.py updates the template
+l10n/rssreader.pot. The module reads the file of KOReader's UI language once, at the first
 require. A text without a translation there goes to KOReader's catalog, so
 shared texts like "Cancel" keep their KOReader translation.
 
@@ -22,7 +22,7 @@ local function unescape(text)
 end
 
 --- Pure: the entries of a .po text in file order, { msgid, msgstr, msgctxt, fuzzy }
--- (header included, msgid ""); a plural entry has msgstr = msgstr[0].
+-- (header included, msgid ""). A plural entry has msgstr = msgstr[0].
 function Translations.entries(text)
     local result = {}
     local entry, field = {}, nil
@@ -62,8 +62,8 @@ function Translations.entries(text)
     return result
 end
 
---- Pure: msgid -> msgstr of a .po text. Header, fuzzy entries, entries with a
--- context and empty translations are left out.
+--- Pure: msgid -> msgstr of a .po text. The result leaves out the header, fuzzy entries,
+-- entries with a context and empty translations.
 function Translations.parsePo(text)
     local catalog = {}
     for _, entry in ipairs(Translations.entries(text)) do
@@ -111,7 +111,7 @@ local function currentLocale()
     if locale and locale ~= "C" then
         return locale
     end
-    -- KOReader keeps "C" when it has no catalog for the language; the setting still names it.
+    -- KOReader keeps "C" when it has no catalog for the language. The setting still names it.
     local ok, setting = pcall(function()
         return G_reader_settings and G_reader_settings:readSetting("language")
     end)

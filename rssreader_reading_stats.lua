@@ -3,14 +3,14 @@ The quick reader in KOReader's reading statistics (statistics.koplugin).
 
 KOReader's statistics only follow documents opened in its ReaderUI (the
 KOReader reader mode gets them for free). The quick reader times its pages
-itself, with the rules of the statistics plugin, and writes them into the same
-database (<settings dir>/statistics.sqlite3, schema 20221111) when an article
-is closed. Every article is one book there: title, author (else the feed),
+itself, with the rules of the statistics plugin. When the user closes an article,
+it writes them into the same database (<settings dir>/statistics.sqlite3, schema
+20221111). Every article is one book there: title, author (else the feed),
 the feed as series, md5 = Images.articleKey (account, id).
 
 Rules of the statistics plugin (settings "statistics" in G_reader_settings):
 a page shown shorter than min_sec does not count, a longer one counts at most
-max_sec; nothing is written while the statistics are disabled.
+max_sec. The module writes nothing while the statistics are disabled.
 ]]
 
 local Stats = {}
@@ -47,8 +47,8 @@ function Tracker:stop(now)
     self.since = nil
 end
 
---- Page `page` of `pages` is shown from `now` on (a turn closes the previous page;
--- a new page count, after a font change, too).
+--- The reader shows page `page` of `pages` from `now` on (a turn closes the previous
+-- page, and so does a new page count after a font change).
 function Tracker:show(page, pages, now)
     if page == self.page and pages == self.pages and self.since then
         return
@@ -79,7 +79,7 @@ end
 -- Database ----------------------------------------------------------------------
 
 -- The schema of statistics.koplugin (ReaderStatistics:createDB, version 20221111):
--- used only when the database does not exist yet.
+-- this module uses it only when the database does not exist yet.
 local SCHEMA = [[
 CREATE TABLE IF NOT EXISTS book
     (
@@ -135,8 +135,8 @@ local function userVersion(conn)
     return tonumber(conn:rowexec("PRAGMA user_version;")) or 0
 end
 
---- Creates the statistics schema in an empty database; true when the database
--- has the schema this module writes (an older or newer one is left alone).
+--- Creates the statistics schema in an empty database. Returns true when the database
+-- has the schema this module writes (it leaves an older or newer one alone).
 function Stats.prepare(conn)
     local version = userVersion(conn)
     if version == 0 then
@@ -172,8 +172,8 @@ local function bookId(conn, book)
 end
 
 --- Writes the records of one reading of `book` like ReaderStatistics:insertDB
--- (pages = current page count of the article; each record keeps the page count
--- it was timed with, the statistics view rescales it). Returns the book id, nil
+-- (pages = current page count of the article. Each record keeps the page count
+-- it was timed with, and the statistics view rescales it). Returns the book id, or nil
 -- without records.
 function Stats.save(conn, book, records, pages, now)
     if #records == 0 then
@@ -217,7 +217,7 @@ function Stats.settings()
 end
 
 --- Writes one reading of an article into KOReader's statistics database
--- (errors are logged, never raised: statistics must not break reading).
+-- (it logs errors and never raises them: statistics must not break reading).
 function Stats.record(article, records, pages, now)
     if #records == 0 or not Stats.settings().is_enabled then
         return

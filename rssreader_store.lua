@@ -1,8 +1,8 @@
 --[[--
 Domain operations of the offline reader (spec 2026-10-08, sections 5 and 6).
 
-Every function takes the db handle from `rssreader_db` as its first argument;
-clock values (`now`) and file removal (`remove_file`) are passed in, so the
+Every function takes the db handle from `rssreader_db` as its first argument.
+The caller passes in clock values (`now`) and file removal (`remove_file`), so the
 module has no hidden side effects and no state of its own.
 
 Article records (spec 3.2) use the fields
@@ -116,10 +116,10 @@ end
 -- except for articles with pending queue entries (local wins, spec 5.3).
 -- Local accounts have no server: their stored status always wins.
 -- opts.complete = true: `articles` is the full unread list of the feed, so local
--- unread articles missing from it are marked read (unless pending; never for
+-- unread articles missing from it become read (not when pending, never for
 -- local accounts). opts.unread_ids (with complete): the full unread list as ids
--- instead (only the new articles come as records, spec 2026-10-13): rows not in
--- it become read, stored rows in it unread (the server wins, unless pending).
+-- instead (only the new articles come as records, spec 2026-10-13). Rows not in
+-- it become read, stored rows in it become unread (the server wins, unless pending).
 function Store.upsertArticles(db, account, feed_id, articles, now, opts)
     local is_local = Store.isLocalAccount(account)
     return inTransaction(db, function()
@@ -154,7 +154,7 @@ function Store.upsertArticles(db, account, feed_id, articles, now, opts)
 end
 
 --- query = { feed_id | folder_id | special = "all"|"today"|"starred", since,
---  unread_only, sort_desc, limit, offset }; account nil = all accounts.
+--  unread_only, sort_desc, limit, offset }. account nil = all accounts.
 -- Returns records without content_html (use getArticle for the text).
 function Store.listArticles(db, account, query)
     local filter = {}
@@ -192,7 +192,7 @@ function Store.setReadPosition(db, account, id, position)
     DB.exec(db, "article_set_position", position, account, tostring(id))
 end
 
---- Registers a downloaded image file of an article; `is_thumb` makes it the card
+--- Registers a downloaded image file of an article. `is_thumb` makes it the card
 -- image. `url` = source URL of the file (the card copy: URL of its original),
 -- so other articles can reuse it (storedImages).
 function Store.addImage(db, account, article_id, path, bytes, is_thumb, url)
@@ -207,8 +207,8 @@ end
 
 -- Image retries (spec 5 step 4, 9) -------------------------------------------
 
--- A failed image download, failed card copy or failed page lookup is retried on
--- the next syncs, at most this many attempts per article.
+-- The next syncs retry a failed image download, failed card copy or failed page
+-- lookup, at most this many attempts per article.
 Store.IMAGE_MAX_ATTEMPTS = 3
 local CARD_COPY_NAME = "thumb.jpg" -- rssreader_images.THUMB_NAME
 
@@ -217,13 +217,13 @@ function Store.recordImageAttempt(db, account, id, outcome)
     DB.exec(db, "article_image_attempt", outcome, Store.IMAGE_MAX_ATTEMPTS, account, tostring(id))
 end
 
---- Preview image found on the article page (og:image); only used for the card.
+--- Preview image found on the article page (og:image). Only the card uses it.
 function Store.setImageUrl(db, account, id, url)
     DB.exec(db, "article_set_image_url", url, account, tostring(id))
 end
 
 --- Image files of OTHER articles (any account) made from these source URLs:
--- url -> { { account, article_id, path, bytes } } (original and card copy rows);
+-- url -> { { account, article_id, path, bytes } } (original and card copy rows).
 -- URLs nobody has are missing. Rows from before migration step 4 have no URL.
 function Store.storedImages(db, urls, account, article_id)
     local found = {}
@@ -313,8 +313,8 @@ function Store.removeFromCache(db, account, id, remove_file)
 end
 
 --- "Clear cache" (spec 8.5): removes articles and images of all accounts.
--- Starred articles stay complete; rows with pending queue entries and rows of
--- local accounts (read state) stay without text and images. The queue is kept.
+-- Starred articles stay complete. Rows with pending queue entries and rows of
+-- local accounts (read state) stay without text and images. The queue stays.
 function Store.clearCache(db, remove_file)
     inTransaction(db, function()
         for _, row in ipairs(DB.rows(db, "unstarred_rows")) do
@@ -331,7 +331,7 @@ end
 -- Status and queue -----------------------------------------------------------
 
 --- Applies read/unread/star/unstar locally and queues it for the server.
--- Local accounts are never queued. A status that is already set is a no-op.
+-- Actions of local accounts never go into the queue. A status that is already set does nothing.
 function Store.setStatus(db, account, article_id, action, now)
     if not ACTIONS[action] then
         return false, "unknown action: " .. tostring(action)
@@ -363,7 +363,7 @@ end
 
 --- Pure: collapses queue entries (ordered by seq). Per article and kind
 -- (read/unread, star/unstar) a run of alternating actions cancels out when it
--- ends opposite to how it started; otherwise the last action is sent once.
+-- ends opposite to how it started. Otherwise the last action goes out once.
 -- Returns actions (ordered by their last seq) and the seqs of cancelled entries.
 function Store.collapseQueue(entries)
     local groups, order = {}, {}
@@ -402,7 +402,7 @@ function Store.collapseQueue(entries)
     return actions, cancelled
 end
 
---- Collapsed actions to send for an account; cancelled entries are deleted.
+--- Collapsed actions to send for an account. Deletes the cancelled entries.
 function Store.pendingActions(db, account)
     return inTransaction(db, function()
         local actions, cancelled = Store.collapseQueue(DB.rows(db, "queue_for_account", account))
@@ -462,13 +462,13 @@ function Store.discardAction(db, action_or_seq)
 end
 
 --- Mirrors the server state (spec 5, step 3b). opts:
---   unread_ids   set (id -> true) of the server's unread items of the checked feeds; nil = skip
+--   unread_ids   set (id -> true) of the server's unread items of the checked feeds, nil = skip
 --   feeds        set of checked feed ids (nil = every row of the account)
---   tree_feeds   set of all feed ids in the tree; rows of other feeds are checked too
---   starred_ids  set of ALL starred items of the account on the server; nil = skip
--- Checked unread rows missing from unread_ids become read, starred rows missing
--- from starred_ids lose the star; rows with a pending queue entry keep their
--- local status (local wins). Nothing is queued. Returns { read, unstarred }.
+--   tree_feeds   set of all feed ids in the tree. The check also covers rows of other feeds
+--   starred_ids  set of ALL starred items of the account on the server, nil = skip
+-- Checked unread rows missing from unread_ids become read. Starred rows missing
+-- from starred_ids lose the star. Rows with a pending queue entry keep their
+-- local status (local wins). The queue does not change. Returns { read, unstarred }.
 function Store.reconcileStatus(db, account, opts)
     return inTransaction(db, function()
         local pending = idSet(DB.rows(db, "queue_article_ids", account), "article_id")
@@ -499,7 +499,7 @@ end
 -- Feeds and tree -------------------------------------------------------------
 
 --- feeds = list of { id, title, folder_id, folder_title, unread }.
--- Keeps the remembered sort direction of feeds that stay; a feed without
+-- Keeps the remembered sort direction of feeds that stay. A feed without
 -- `unread` (count unknown, e.g. local feeds) keeps its stored count.
 function Store.replaceFeeds(db, account, feeds)
     inTransaction(db, function()
@@ -520,10 +520,10 @@ end
 
 --- Deletes the articles (rows, image rows and files) of feeds that are no
 -- longer in the account's feed list (unsubscribed on the server). Starred
--- articles and articles with pending queue entries stay (shown under Starred);
--- rows without a feed id are not touched. Local accounts are left alone: their
--- rows carry the read state of the classic view. Page files go with the next
--- page cleanup (no text in the cache any more). Returns the number deleted.
+-- articles and articles with pending queue entries stay (shown under Starred).
+-- Rows without a feed id stay as they are. Local accounts stay unchanged: their
+-- rows carry the read state of the classic view. The next page cleanup removes the
+-- page files (no text in the cache anymore). Returns the number deleted.
 function Store.dropRemovedFeeds(db, account, remove_file)
     if Store.isLocalAccount(account) then
         return 0
@@ -560,8 +560,8 @@ local function byTitle(a, b)
 end
 
 --- Pure: builds the tree from feed rows and pending counts per feed.
--- Count = server_unread - pending reads + pending unreads (never below 0);
--- a folder counts the sum of its feeds.
+-- Count = server_unread - pending reads + pending unreads (never below 0).
+-- A folder counts the sum of its feeds.
 function Store.buildTree(feed_rows, pending_by_feed, unread_only)
     local folders, folder_list, loose = {}, {}, {}
     local total = 0
@@ -623,7 +623,7 @@ local function evictImages(db, account, id, remove_file)
     return "images"
 end
 
--- Read articles lose everything; rows of local accounts keep their read state.
+-- Read articles lose everything. Rows of local accounts keep their read state.
 local function evictReadArticle(db, account, id, remove_file)
     dropImages(db, account, id, remove_file)
     if Store.isLocalAccount(account) then
@@ -649,8 +649,8 @@ local PHASES = {
 }
 
 --- Enforces "keep read N days" and the size limit (sum of articles.bytes).
--- max_bytes nil = unlimited; keep_read_days nil = keep forever. Starred
--- articles are never touched. Returns the steps taken: { account, id, what }
+-- max_bytes nil = unlimited, keep_read_days nil = keep forever. Starred
+-- articles never change. Returns the steps taken: { account, id, what }
 -- with what = "images" | "text" | "row".
 function Store.enforceCacheLimit(db, max_bytes, keep_read_days, now, remove_file)
     return inTransaction(db, function()
@@ -766,7 +766,7 @@ function Store.storyFromArticle(article)
     }
 end
 
---- Saves (stars) an article in `account`; returns false, "duplicate" when it is already saved.
+--- Saves (stars) an article in `account`. Returns false, "duplicate" when it is already saved.
 function Store.saveStory(db, account, article, now)
     local outcome = inTransaction(db, function()
         local row = DB.row(db, "article_get", account, tostring(article.id))
@@ -791,7 +791,7 @@ function Store.saveStory(db, account, article, now)
     return true
 end
 
---- Starred articles (with text) of `account` (nil = all accounts), in the order they were stored.
+--- Starred articles (with text) of `account` (nil = all accounts), in storage order.
 function Store.listStarred(db, account)
     return mapRecords(DB.rows(db, "starred_list", account))
 end
@@ -805,7 +805,7 @@ function Store.readIds(db, account, feed_id)
     return idSet(DB.rows(db, "article_read_ids_for_feed", account, tostring(feed_id)))
 end
 
---- Records the read state of local feed stories; creates header-only rows as needed.
+--- Records the read state of local feed stories. Creates header-only rows when necessary.
 function Store.markLocalRead(db, account, feed_id, ids, is_read, now)
     inTransaction(db, function()
         for _, id in ipairs(ids or {}) do
@@ -816,7 +816,7 @@ end
 
 --- Deletes unstarred rows of a feed whose ids are not in `keep_ids` (stories that left the feed).
 -- opts.headers_only: only read-state rows without title and text (the classic
--- view's own rows; its story list may be partial, cached articles stay).
+-- view's own rows. Its story list can be partial, so cached articles stay).
 function Store.pruneFeed(db, account, feed_id, keep_ids, remove_file, opts)
     local keep = {}
     for _, id in ipairs(keep_ids or {}) do

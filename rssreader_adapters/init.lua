@@ -12,32 +12,32 @@ is_starred.
 Required:
   fetchTree()                -> true, { folders = { {id, title, unread} },
                                         feeds = { {id, title, folder_id, folder_title, unread} } }
-                                (unread = server count; nil = unknown, the stored count stays)
+                                (unread = server count, nil = unknown and the stored count stays)
   fetchUnread(feed_id, limit, continuation) -> true, { articles, all_ids?, continuation? }
-                                newest first; feed_id may be a special id (common.SPECIAL:
-                                "@all", "@today", "@starred"); continuation = opaque token of
+                                newest first. feed_id can be a special id (common.SPECIAL:
+                                "@all", "@today", "@starred"). continuation = opaque token of
                                 the next page from the previous result, nil at the end
-  applyAction(action)        -> true | false, err, kind; action = { action = "read" |
+  applyAction(action)        -> true | false, err, kind. action = { action = "read" |
                                 "unread" | "star" | "unstar", article_id }
-  supports(feature)          -> bool; features: "star", "today", "ids"
+  supports(feature)          -> bool. Features: "star", "today", "ids"
 
 Optional extensions (the sync checks for them):
   result.all_ids             fetchUnread of a backend without server state (local feeds):
-                             ids of ALL stories still in the feed; the sync forgets other
+                             ids of ALL stories still in the feed. The sync forgets other
                              rows of the feed and counts unread articles itself.
   applyActions(action, article_ids) -> true | false, err, kind   one action for many
-                             articles in one request; the sync sends up to Sync.ACTION_BATCH
-                             ids per call and falls back to applyAction when it is refused.
+                             articles in one request. The sync sends up to Sync.ACTION_BATCH
+                             ids per call and uses applyAction when the backend refuses the call.
   fetchStarred(limit)        -> true, { articles }   starred articles, read or not
-                             (used when supports("star")).
+                             (the sync uses it when supports("star")).
   fetchUnreadIds(feed_id, cap), fetchStarredIds(cap)   with supports("ids"):
                              -> true, set (id -> true) of ALL unread items of the feed /
                              ALL starred items of the account, ids in the same form as the
-                             articles; false when there are more than `cap` (an incomplete
-                             set must never be used). Sync step 3b reconciles with them.
+                             articles. false when there are more than `cap` (never use an
+                             incomplete set). Sync step 3b reconciles with them.
   fetchIdList(feed_id, opts), fetchByIds(ids)   with supports("ids") (spec 2026-10-13):
                              -> true, { ids } every item id of the feed / special id, newest
-                             first; opts = { unread_only (false: read items too), cap }; false
+                             first. opts = { unread_only (false: read items too), cap }. false
                              over cap. -> true, { articles } exactly these articles (any order).
 ]]
 
@@ -64,7 +64,7 @@ function Adapters.accountKey(account)
     return Store.accountKey(account.type, account.name)
 end
 
---- Adapter of a configured account, or nil, err. `env` is passed on (e.g. { now = fn }).
+--- Adapter of a configured account, or nil, err. Passes `env` on to the adapter (e.g. { now = fn }).
 function Adapters.forAccount(account, accounts_module, env)
     local backend = BACKENDS[type(account) == "table" and account.type or nil]
     if not backend then

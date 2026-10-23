@@ -1834,8 +1834,8 @@ function utils.determineSanitizedSaveDirectory(builder)
 end
 
 -- Offline DB access for the classic view ------------------------------------
--- The shared handle comes from rssreader_storage.lua; the first caller after a
--- damaged DB was replaced tells the user about it.
+-- The shared handle comes from rssreader_storage.lua. The first caller after
+-- the replacement of a damaged DB tells the user about it.
 function utils.offlineDb()
     local db = Storage.get()
     local notice = db and Storage.takeNotice()
@@ -1850,8 +1850,8 @@ function utils.offlineDb()
 end
 
 -- Reading list ("List"): purely local, as before the rework. Saved stories are
--- starred rows of Store.LIST_ACCOUNT only; server favourites never show up here
--- and are never unstarred from here. Stories returned by utils.listStories carry
+-- starred rows of Store.LIST_ACCOUNT only. Server favorites never show here,
+-- and this list never unstars them. Stories that utils.listStories returns carry
 -- _store_account/_store_id and _pool_read.
 function utils.listAdd(story)
     local key = utils.storyUniqueKey(story)
@@ -1930,7 +1930,7 @@ function utils.saveLocalReadMap(account_name, feed_identifier, read_map)
     utils.setLocalRead(account_name, feed_identifier, keys, true)
 end
 
--- Forgets stories that left the feed; returns the read map limited to valid_keys.
+-- Forgets stories that left the feed. Returns the read map limited to valid_keys.
 function utils.pruneLocalRead(account_name, feed_identifier, read_map, valid_keys)
     local pruned = {}
     for _, key in ipairs(valid_keys or {}) do

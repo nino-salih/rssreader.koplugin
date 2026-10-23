@@ -108,7 +108,7 @@ describe("rssreader_adapters/local", function()
         local _, result = newAdapter().fetchUnread("https://garden.example/rss", 10)
         assert.equals("https://garden.example/pics/old.jpg", result.articles[3].image_url)
         assert.equals("Older & wiser", result.articles[3].title)
-        -- RSS <author>: the name in brackets; a bare e-mail address is no name.
+        -- RSS <author>: the name in brackets. A bare e-mail address is no name.
         assert.equals("Old Gardener", result.articles[3].author)
         assert.is_nil(result.articles[2].author)
 

@@ -1,20 +1,20 @@
 -- Monthly request counter for sanitizers that are billed per call.
 --
--- RapidAPI's free BASIC plan is a *soft* limit: once the included requests are
--- used up the calls are not blocked, they are billed (currently $0.05 each),
--- and the only warning is a notice at 85% and 100% of the quota. Since the
--- sanitizer chain fires on every story that gets opened, the brake has to live
+-- RapidAPI's free BASIC plan is a *soft* limit: after the included requests are
+-- consumed, RapidAPI does not block the calls but bills them (currently $0.05 each).
+-- The only warning is a notice at 85% and 100% of the quota. The sanitizer
+-- chain runs on every story that the user opens, so the brake must be
 -- on this side.
 --
--- The counter is deliberately conservative: it is incremented before the
--- request goes out, so a failed call still costs a slot rather than risking an
--- undercount against real billing.
+-- The counter is conservative on purpose: it increments before the
+-- request goes out. Thus a failed call still costs a slot, and the count is
+-- never lower than the real billing.
 --
 -- The state lives in the offline DB (meta, account '', key 'sanitizer_quota')
--- as JSON { period = "YYYY-MM", counts = { [id] = n }, warned = { [id] = true } };
--- the old data/rssreader_sanitizer_quota.json is migrated there once
--- (rssreader_migration.lua). The *In functions take the db and the period so
--- they can be tested; the public functions use the shared DB and the clock.
+-- as JSON { period = "YYYY-MM", counts = { [id] = n }, warned = { [id] = true } }.
+-- rssreader_migration.lua moves the old data/rssreader_sanitizer_quota.json there
+-- once. The *In functions take the db and the period so that tests can call
+-- them. The public functions use the shared DB and the clock.
 
 local json = require("common/json")
 local logger = require("logger")
@@ -60,8 +60,8 @@ function Quota.usedIn(db, id, period)
     return tonumber(loadState(db, period).counts[id]) or 0
 end
 
--- Books a request against `limit`. Returns true when the caller may proceed
--- (and the request has been counted), false when the quota is spent.
+-- Books a request against `limit`. Returns true when the caller can continue
+-- (the counter then includes the request), false when the quota is spent.
 -- A limit of nil, 0 or a negative number means "no ceiling".
 function Quota.consumeIn(db, id, limit, period)
     if not validId(id) then
@@ -107,8 +107,8 @@ function Quota.used(id)
     return db and Quota.usedIn(db, id, currentPeriod()) or 0
 end
 
--- Without the DB the brake cannot count; the request is allowed (as before,
--- when the quota file could not be written).
+-- Without the DB the brake cannot count. The function allows the request (as
+-- before, when the quota file write failed).
 function Quota.consume(id, limit)
     local db = sharedDb()
     if not db then

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs all specs (or the given spec files) with LuaJIT + busted.
-# Setup once with spec/setup_env.sh. Exits non-zero when a spec fails.
+# Prepare the environment once with spec/setup_env.sh. Exits non-zero when a spec fails.
 set -euo pipefail
 
 DEV="${RSSREADER_DEV:-$HOME/rssreader-dev}"

@@ -1,8 +1,8 @@
 --[[--
 The article page of both reader modes (spec 2026-10-08, section 8.4): banner
-image, title, meta line (author · time · reading time), duplicate title and
-banner stripped, local images only. Pure: settings, article and file access
-come in as parameters, so the quick reader (MuPDF, rssreader_ui_reader) and
+image, title, meta line (author · time · reading time). It removes a duplicate
+title and banner and uses local images only. Pure: settings, article and file
+access come in as parameters, so the quick reader (MuPDF, rssreader_ui_reader) and
 the KOReader reader (crengine, rssreader_readers) share one builder.
 
 Portions adapted from quickrss.koplugin (MIT, (c) 2026 qewer33):
@@ -46,8 +46,8 @@ figure { text-align: center; margin: 0.5em 0; }
 end
 
 -- crengine: font, size, line height and alignment come from the user's
--- KOReader settings (and its style tweaks), so the page sets none of them;
--- only image sizing, the meta line and the spacing of headings and paragraphs.
+-- KOReader settings (and its style tweaks), so the page does not set them. It
+-- sets only image sizing, the meta line and the spacing of headings and paragraphs.
 -- KOReader's html5.css starts a new page at every top-level <h1> of an HTML
 -- file (epub.css in legacy mode also at <h2>/<h3>): an article is one flow.
 local CRENGINE_CSS = [[
@@ -63,7 +63,7 @@ hr { border: none; border-top: 1px solid #999999; margin: 0.8em 0 1em; }
 figure { margin: 0.5em 0; }
 ]]
 
---- CSS of the page; target "quick" (MuPDF, the plugin's font settings) or
+--- CSS of the page. target: "quick" (MuPDF, the plugin's font settings) or
 -- "crengine" (KOReader reader). scale(size) converts the font size to pt.
 function Article.css(settings, target, scale)
     if target == "crengine" then
@@ -73,11 +73,11 @@ function Article.css(settings, target, scale)
 end
 
 -- Room for the quick reader's end bar after the text (checked in the emulator,
--- MuPDF of KOReader v2026.07.1): the page is laid out in pt and drawn at zoom 1,
--- so 1pt = 1 screen pixel (unlike the font size, which is scaled to KOReader's
--- sizes). Only a block with a height works: MuPDF ignores padding-bottom of the
--- content and cuts paddings at a page break. A spacer that does not fit makes
--- one more page, which shows only the end bar.
+-- MuPDF of KOReader v2026.07.1). MuPDF lays out the page in pt and draws it at
+-- zoom 1, so 1pt = 1 screen pixel. The font size is different: this module scales
+-- it to KOReader's sizes. Only a block with a height works: MuPDF ignores
+-- padding-bottom of the content and cuts paddings at a page break. A spacer that
+-- does not fit makes one more page, which shows only the end bar.
 local function endSpacer(end_space)
     if not end_space or end_space <= 0 then
         return ""
@@ -88,11 +88,11 @@ end
 --- The page content of an article (a <div class="content">).
 -- ctx: settings, imageDir(article), listFiles(dir), fileExists(path).
 -- opts.base: image path prefix ("." = relative to the image folder, the quick
--- reader's resource directory; the KOReader reader uses rssreader_pages.imageBase).
+-- reader's resource directory. The KOReader reader uses rssreader_pages.imageBase).
 -- opts.tappable (default true): images become rssreader-img: links.
 -- opts.now: clock for the date.
 -- opts.end_space (quick reader, screen pixels): room after the text for the end bar.
--- opts.layout (quick reader): { page_h, text_w, font_px, line_h } in pixels; the
+-- opts.layout (quick reader): { page_h, text_w, font_px, line_h } in pixels. The
 -- paragraphs become keep rows (rssreader_ui_pages), so pages end between them.
 function Article.content(ctx, article, opts)
     opts = opts or {}
@@ -107,7 +107,7 @@ function Article.content(ctx, article, opts)
     body = Model.stripLeadingTitle(body, article.title)
     local dir = ctx.imageDir(article)
     local files = settings.article_images and ctx.listFiles(dir) or {}
-    -- The banner is the original image; thumb_path is only the small card copy.
+    -- The banner is the original image. thumb_path is only the small card copy.
     local banner = Images.localFile(files, Common.resolveUrl(article.image_url, article.link))
     local thumb = article.thumb_path
     if not banner and thumb and thumb:sub(1, #dir + 1) == dir .. "/" and ctx.fileExists(thumb) then

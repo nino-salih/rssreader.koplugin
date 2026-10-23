@@ -1,8 +1,8 @@
--- Quick reader pages that keep paragraphs together (block 11): the article HTML
--- is pre-processed so that MuPDF's own pagination does it. MuPDF keeps a table
--- row on one page (it ignores page-break-inside, orphans and widows), so every
--- paragraph becomes a one-row table (CSS display: table), a heading shares the
--- row of the next paragraph, and a paragraph longer than half a page becomes
+-- Quick reader pages that keep paragraphs together (block 11): the module prepares
+-- the article HTML so that MuPDF's own pagination does it. MuPDF keeps a table
+-- row on one page (it ignores page-break-inside, orphans and widows). So every
+-- paragraph becomes a one-row table (CSS display: table), and a heading shares the
+-- row of the next paragraph. A paragraph longer than half a page becomes
 -- one row per group of sentences.
 local Pages = require("rssreader_ui_pages")
 

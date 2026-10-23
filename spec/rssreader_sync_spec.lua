@@ -28,7 +28,7 @@ local TREE = {
     },
 }
 
--- Fake adapter; every call is appended to `log`.
+-- Fake adapter. It appends every call to `log`.
 local function fakeAdapter(log, spec)
     spec = spec or {}
     local adapter = {}
@@ -42,7 +42,7 @@ local function fakeAdapter(log, spec)
     function adapter.fetchUnread(feed_id, limit, continuation)
         table.insert(log, "unread:" .. feed_id .. ":" .. tostring(limit) .. (continuation and (":" .. continuation) or ""))
         local result = (spec.unread or {})[feed_id] or { articles = {} }
-        -- Paged feed: pages[token] (first page under "first"); a page may fail.
+        -- Paged feed: pages[token] (first page under "first"). A page may fail.
         if result.pages then
             local page = result.pages[continuation or "first"]
             if page.error then
@@ -261,7 +261,7 @@ describe("rssreader_sync", function()
         assert.equals(2, summary.feeds_ok)
         assert.equals(1, summary.articles)
         assert.is_false(Store.getArticle(db, "freshrss:Home", "a2").is_read)
-        -- Unread on the server: unread here again; not listed any more: read.
+        -- Unread on the server: unread here again. Not listed any more: read.
         assert.is_false(Store.getArticle(db, "freshrss:Home", "a3").is_read)
         assert.is_true(Store.getArticle(db, "freshrss:Home", "a9").is_read)
 
@@ -658,7 +658,7 @@ describe("rssreader_sync", function()
             specs.Work = { unread = { f1 = { articles = { art("w1") } } } }
             local summary = Sync.run(deps(), { HOME, WORK }, SETTINGS)
             local f2_calls = select(2, table.concat(log, ","):gsub("unread:f2:", ""))
-            assert.equals(1, f2_calls) -- only Work's; Home stopped after f1
+            assert.equals(1, f2_calls) -- only Work's. Home stopped after f1.
             assert.is_true(summary.interrupted)
             assert.equals("network", summary.accounts.Home.kind)
             assert.is_false(summary.accounts.Home.ok)
@@ -878,7 +878,7 @@ describe("rssreader_sync", function()
             end })
             Sync.run(failing, { HOME }, OG)
             assert.equals(1, attempts("a1"))
-            -- the feed no longer lists the article: it is retried from the cache
+            -- the feed no longer lists the article: the sync tries it again from the cache
             specs.Home = { unread = { f1 = { articles = {} } } }
             log = {}
             Sync.run(failing, { HOME }, OG)

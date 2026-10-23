@@ -3,10 +3,10 @@ Runs independent jobs in a few forked worker processes (KOReader's
 ffiutil.runInSubProcess with a pipe) and returns their results to the parent.
 
 The work is latency bound (HTTP requests): N requests one after the other cost
-about N times the latency of one, a few workers cut that down. Every worker
-gets a round-robin bucket of jobs, runs them one after the other and writes
-all its results through its pipe, serialised with LuaJIT's string.buffer
-(the same way Trapper:dismissableRunInSubprocess does). Results must therefore
+about N times the latency of one. A few workers reduce that time. Every worker
+gets a round-robin bucket of jobs and runs them one after the other. It writes
+all its results through its pipe, serialized with LuaJIT's string.buffer
+(the same way Trapper:dismissableRunInSubprocess does). Thus results must
 be plain data (no functions, no cdata). A job that raises an error has no result.
 
 Without fork support (emulator without ffiutil, specs), with one worker or one
@@ -17,10 +17,10 @@ job the jobs run in the parent, one after the other.
   jobs     list of job inputs
   run      function(job) -> result (runs in the worker process)
   opts     workers        1..8 (default 4), capped at #jobs
-           on_poll(done, total) -> false cancels; called before each job when
+           on_poll(done, total) -> false cancels. Called before each job when
                           sequential, and on every poll while workers run
-           wait(seconds) -> false cancels; pause between polls (default socket.sleep)
-           ffiutil        fork API (default require("ffi/util"); injected by specs)
+           wait(seconds) -> false cancels. Pause between polls (default socket.sleep)
+           ffiutil        fork API (default require("ffi/util"), specs inject their own)
            collect_later(pids) reaps killed workers later (default: UIManager timer)
   results  index -> result (nil = failed or not run), cancelled = boolean
 ]]
@@ -70,7 +70,7 @@ local function sequential(jobs, run, opts)
     return results, false
 end
 
--- Killed workers still have to be reaped (and their pipes closed); the same
+-- We must still reap killed workers (and close their pipes). We use the same
 -- approach as Trapper: a UIManager timer instead of blocking here.
 local function collectLater(ffiutil, workers)
     local ok, UIManager = pcall(require, "ui/uimanager")
@@ -104,7 +104,7 @@ local function startWorker(ffiutil, jobs, run, bucket)
     end, true)
 end
 
--- Reads a finished worker's results into `results`; returns the job count.
+-- Reads a finished worker's results into `results`. Returns the job count.
 local function collectWorker(ffiutil, worker, results)
     local data = ffiutil.readAllFromFD(worker.fd)
     if not worker.done then
@@ -127,7 +127,7 @@ local function parallel(jobs, run, opts, ffiutil, worker_count)
         if pid then
             table.insert(running, { pid = pid, fd = fd, bucket = bucket })
         else
-            -- fork() failed: this bucket is on us, right here.
+            -- fork() failed: the parent runs this bucket itself, right here.
             require("logger").warn("RSSReader parallel: could not fork a worker", fd)
             for _, index in ipairs(bucket) do
                 results[index] = runJob(run, jobs[index])

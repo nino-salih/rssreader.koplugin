@@ -103,7 +103,7 @@ describe("rssreader_reading_stats: KOReader statistics database", function()
         assert.equals(75, tonumber(row.total_read_time[1]))
         assert.equals(2, tonumber(row.total_read_pages[1]))
 
-        -- Reading it again adds to the same book; the same records are not counted twice.
+        -- A second reading adds to the same book. The module does not count the same records twice.
         assert.equals(id, Stats.save(conn, book, records, 2, T0 + 200))
         assert.equals(id, Stats.save(conn, book, { { page = 1, start_time = T0 + 300, duration = 10, total_pages = 2, capped = false } },
             2, T0 + 400))

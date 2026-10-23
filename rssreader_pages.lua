@@ -1,13 +1,13 @@
 --[[--
 Page files of the KOReader reader mode (spec 2026-10-08, section 8.4): one HTML
-file per article, <data dir>/rssreader_offline/pages/<article key>.html, next to
-the image folders (<data dir>/rssreader_offline/images/<article key>/), which the
-page references relatively ("../images/<key>/img….jpg"), so crengine resolves
-the images itself. The key is Images.articleKey (md5 of account and id).
+file per article, <data dir>/rssreader_offline/pages/<article key>.html. The page
+folder is next to the image folders (<data dir>/rssreader_offline/images/<article key>/).
+A page refers to its images by a relative path ("../images/<key>/img….jpg"), so crengine
+resolves the images itself. The key is Images.articleKey (md5 of account and id).
 
-A page lives as long as the article's text is in the cache: Pages.cleanup
+A page lives as long as the article's text is in the cache. Pages.cleanup deletes
 deletes the pages (and KOReader's document metadata, the .sdr sidecar) of
-articles that left it (eviction, Clear cache, Remove from cache).
+articles that left the cache (eviction, Clear cache, Remove from cache).
 
 Side effects of cleanup come in through `deps`:
   db, store      rssreader_db handle and rssreader_store
@@ -45,8 +45,8 @@ function Pages.isPage(root, path)
 end
 
 --- Pure: entries of the page folder to delete. keep = set of article keys.
--- Returns { pages = { "<key>.html" }, sidecars = { "<key>.sdr" } }; a sidecar
--- next to a deleted page goes with the page (purge), so it is not listed.
+-- Returns { pages = { "<key>.html" }, sidecars = { "<key>.sdr" } }. A sidecar
+-- next to a deleted page goes with the page (purge), so the result does not list it.
 function Pages.orphans(names, keep)
     local present, pages, sidecars = {}, {}, {}
     for _, name in ipairs(names) do
@@ -88,7 +88,7 @@ end
 
 -- Device side effects ---------------------------------------------------------------
 
---- Writes a page; returns true or false, err.
+--- Writes a page. Returns true or false, err.
 function Pages.write(path, html)
     local dir = path:match("^(.*)/")
     local util = require("util")
@@ -128,7 +128,7 @@ local function devicePurge(path)
 end
 
 --- Forgets where KOReader stopped reading an article page (its metadata, the
--- page itself and its History entry); the next open starts at the top.
+-- page itself and its History entry). The next open starts at the top.
 function Pages.forgetPosition(account, article_id)
     devicePurge(Pages.path(Pages.root(), account, article_id))
 end
@@ -141,7 +141,7 @@ local function deviceRemoveDir(path)
     fs.rmdir(path)
 end
 
---- Pages.cleanup with the real file system; safe to call anywhere (never raises).
+--- Pages.cleanup with the real file system. Safe to call anywhere (never raises).
 function Pages.cleanupDevice(db)
     local Store = require("rssreader_store")
     local ok, result = pcall(Pages.cleanup, {

@@ -111,7 +111,7 @@ describe("size cap of image downloads (block 13)", function()
         local hook_left = socket.sourcet["by-length"]
         socket.sourcet = nil
         assert.equals("too large: 6.5 MB", errors[task])
-        assert.same({}, opened) -- the real source was never opened
+        assert.same({}, opened) -- the code never opened the real source
         assert.is_false(helpers.exists(dir .. "/img1.png.part"))
         -- the hook is gone after the request
         assert.equals("function", type(hook_left))
@@ -138,7 +138,7 @@ describe("thumbnail decode guard (block 13)", function()
         assert.same({ 6000, 4000 }, { Images.imageSize(riff("VP8X", "\0\0\0\0" .. le(5999, 3) .. le(3999, 3))) })
         assert.same({ 300, 200 }, { Images.imageSize("BM" .. string.rep("\0", 16) .. le(300, 4) .. le(200, 4)) })
         assert.is_nil(Images.imageSize("<svg xmlns='http://www.w3.org/2000/svg'/>"))
-        assert.is_nil(Images.imageSize("\255\216\255\224")) -- cut off before the frame header
+        assert.is_nil(Images.imageSize("\255\216\255\224")) -- ends before the frame header
         assert.is_nil(Images.imageSize(nil))
     end)
 

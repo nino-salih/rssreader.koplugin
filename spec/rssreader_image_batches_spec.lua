@@ -129,7 +129,7 @@ describe("image batches (block 8)", function()
         DB.close(db)
     end)
 
-    -- Fake downloader: one call per batch; urls containing "fail" fail with `error`.
+    -- Fake downloader: one call per batch. URLs that contain "fail" fail with `error`.
     local function fakeDownload(calls, error)
         return function(tasks, dir)
             table.insert(calls, { dir = dir, count = #tasks })
@@ -418,7 +418,7 @@ describe("sync image batches and circuit breaker (block 8)", function()
                 return true, { downloaded = 0, failed = 0, skipped = opts.skip("https://x/a.jpg") and 1 or 0 }
             end,
         }), { HOME }, copy(SETTINGS, { page_images_max = 30 }))
-        -- the first batch asks its 16 pages in one parallel run; all fail with DNS errors
+        -- the first batch asks its 16 pages in one parallel run. All fail with DNS errors.
         assert.equals(16, #entries("page:"))
         assert.is_true(skipped_seen)
         assert.is_true(summary.network_down)

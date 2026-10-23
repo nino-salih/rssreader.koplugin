@@ -2,12 +2,12 @@
 Card list of the cache mode from the server's id list (spec 2026-10-13, section 5).
 
 The list of a FreshRSS feed, folder or special comes as the complete id list
-(newest first). Article texts are loaded in blocks along the load sequence (the
-id list in the sort direction); the list shows the stored rows of the covered
-ids, sorted by publish date like every card list, followed by one placeholder
-per id that is not loaded yet, so the page count is right from the start.
+(newest first). The sync loads article texts in blocks along the load sequence (the
+id list in the sort direction). The list shows the stored rows of the covered ids,
+sorted by publish date like every card list. One placeholder follows for each id
+that is not loaded yet, so the page count is correct from the start.
 
-Pure: no I/O; rssreader_sync loads, rssreader_ui_tree wires it.
+Pure: no I/O. rssreader_sync loads the data, rssreader_ui_tree connects it to the UI.
 ]]
 
 local LiveList = {}
@@ -28,7 +28,7 @@ function LiveList.merge(lists)
     return merged
 end
 
---- Load sequence: the id list (newest first) in the sort direction; `sort_desc`
+--- Load sequence: the id list (newest first) in the sort direction. `sort_desc`
 -- nil = descending, the default of the card lists.
 function LiveList.order(ids, sort_desc)
     if sort_desc ~= false then

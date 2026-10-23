@@ -5,10 +5,10 @@ One-time migration of the legacy JSON files into the offline DB (spec 2026-10-08
   data/rssreader_local_log/*.json      -> is_read of local feed stories
   data/rssreader_sanitizer_quota.json  -> meta (account '', key 'sanitizer_quota')
 
-Everything is written in one transaction together with the meta flag DONE_KEY.
-Only after the commit are the files renamed to *.migrated. If the transaction
-fails, nothing changes and the next start tries again. Files that cannot be
-decoded, and read logs of feeds that are no longer configured, are left in place.
+The migration writes everything in one transaction together with the meta flag DONE_KEY.
+Only after the commit does it rename the files to *.migrated. If the transaction
+fails, nothing changes and the next start tries again. The migration leaves files in
+place that it cannot decode, and read logs of feeds that are no longer configured.
 ]]
 
 local lfs = require("libs/libkoreader-lfs")
@@ -60,7 +60,7 @@ end
 function Migration.poolArticles(data, story_key, now)
     local articles = {}
     for _, story in ipairs(type(data.stories) == "table" and data.stories or {}) do
-        -- Old pool keys were "pool:<md5>"; the List now uses "local:<md5>" (same hash).
+        -- Old pool keys were "pool:<md5>". The List now uses "local:<md5>" (same hash).
         local key = story._pool_key and tostring(story._pool_key):gsub("^pool:", "local:") or story_key(story)
         if key then
             local article = Store.articleFromStory(story, key)

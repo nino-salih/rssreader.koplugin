@@ -1,6 +1,6 @@
 -- Read-only checks plus one restored write against a real FreshRSS server.
--- Credentials come ONLY from RSSREADER_TEST_FRESHRSS_URL / _USER / _PASSWORD;
--- the spec is skipped when they are missing. Nothing but counts is printed:
+-- Credentials come ONLY from RSSREADER_TEST_FRESHRSS_URL / _USER / _PASSWORD.
+-- Without them, the spec does not run. The spec prints nothing but counts:
 -- no credentials, no titles, no article contents.
 
 local Curl = require("curl_http")
@@ -131,7 +131,7 @@ describe("FreshRSS integration", function()
             starred_count = starred_count + 1
         end
         print(string.format("[freshrss] unread ids=%d (tree %d) starred ids=%d", id_total, tree_total, starred_count))
-        -- Counts can move while the test runs (new articles); allow a small drift.
+        -- Counts can move while the test runs (new articles). Allow a small drift.
         assert.is_true(math.abs(id_total - tree_total) <= 5, "id lists do not cover the tree counts")
     end)
 
@@ -173,7 +173,7 @@ describe("FreshRSS integration", function()
         local all_ok, all = adapter.fetchIdList(feed.id, { unread_only = false, cap = 10000 })
         assert.is_true(all_ok)
         assert.is_true(#all.ids >= #unread.ids)
-        -- Newest first: ids (microsecond timestamps) fall.
+        -- Newest first: ids (microsecond timestamps) decrease.
         for index = 2, #all.ids do
             assert.is_true(all.ids[index - 1] > all.ids[index], "id list not newest first")
         end
@@ -195,7 +195,7 @@ describe("FreshRSS integration", function()
             end
         end
         -- Within one feed the id order should follow the publish date (FreshRSS
-        -- inserts chronologically): count neighbours that break it.
+        -- inserts chronologically): count neighbors that break it.
         local published = {}
         for _, article in ipairs(by_ids.articles) do
             published[article.id] = article.published

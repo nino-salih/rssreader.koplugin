@@ -8,7 +8,7 @@ reconciled against the server id lists (adapters with supports("ids")),
 lookups of a batch in parallel, one parallel download for all its images, then
 thumbnails and bookkeeping one by one). After all accounts: cache limit incl.
 "keep read N days", orphaned image files. An auth or network error stops only
-that account; a full device stops the run; a dead network skips the remaining
+that account. A full device stops the run. A dead network skips the remaining
 page lookups and image downloads of the run (circuit breaker, spec 9).
 
 All side effects come in through `deps`:
@@ -17,16 +17,16 @@ All side effects come in through `deps`:
   account_key(account)   -> "<type>:<name>" (default rssreader_adapters accountKey)
   fetch_images(account_key, article, image_opts, job) -> true, { downloaded, reused, copied, failed,
                          skipped, failures = { { url, error } }, too_large, thumb_failed, thumb_final, registered
-                         (files written to the store; 0 skips the cache limit check) } | false, "disk_full"
+                         (files written to the store, 0 skips the cache limit check) } | false, "disk_full"
                          (job = prepared by prepare_images: register only, no download)
   prepare_images(account_key, articles, image_opts) -> jobs (article id -> job), cancelled, proxy_error
-                         (optional; one parallel download for a batch; proxy_error = the image
+                         (optional. One parallel download for a batch. proxy_error = the image
                          proxy failed, the files came directly)
   image_proxy            HtmlResources.proxyConfig or nil: image downloads go through it until it
                          fails, then directly for the rest of the run (image_opts.proxy)
-  fetch_page_image(link) -> true, url|nil | false, err, err_kind   (optional; og:image of the article page;
+  fetch_page_image(link) -> true, url|nil | false, err, err_kind   (optional. og:image of the article page.
                          runs in forked workers via rssreader_parallel when the device can fork)
-  ffiutil                fork API for rssreader_parallel (optional; without it page lookups run one by one)
+  ffiutil                fork API for rssreader_parallel (optional. Without it, page lookups run one by one)
   clock()                wall clock in seconds for the timing log (default os.time)
   cleanup_images()       -> number of removed orphan files (optional)
   remove_file(path) (default os.remove), now(), is_online() (optional), transaction(db, fn) (default rssreader_db)
@@ -35,8 +35,8 @@ settings: mode ("preload" | "cache_only"), articles_per_feed, starred_limit,
   max_cache_bytes (nil = unlimited), keep_read_days (nil = forever), thumbnails, article_images, workers,
   og_image (preview image from the article page), page_images_max (page lookups per run).
 image_opts = { thumbnails, article_images, workers, skip(url) -> true (breaker), on_poll(done, total) -> false cancels,
-  proxy (image proxy while it works, else nil) }; fetch_images may report info.proxy_error.
-on_progress(event) with event = { stage, account, current, total, title, detail }; returning false cancels.
+  proxy (image proxy while it works, else nil) }. fetch_images can report info.proxy_error.
+on_progress(event) with event = { stage, account, current, total, title, detail }. A false return cancels.
   detail (stage "images", while a batch works): { kind = "lookup" | "download", left = requests
   not finished yet, seconds = since the stage of the batch began } (Model.progressText).
 ]]
@@ -96,7 +96,7 @@ local function newSummary()
 end
 
 --- A failed SQLite write because the device is full: SQLITE_FULL reads
--- "database or disk is full"; a failed file write "No space left on device".
+-- "database or disk is full". A failed file write reads "No space left on device".
 function Sync.isDiskFull(message)
     local text = tostring(message):lower()
     return text:find("disk is full", 1, true) ~= nil or text:find("no space left", 1, true) ~= nil
@@ -142,7 +142,7 @@ function Sync.flushQueue(deps, account, adapter)
     local key = accountKey(deps, account)
     local actions = store(deps).pendingActions(deps.db, key)
     local left = #actions
-    -- The remaining entries would fail the same way; they stay queued.
+    -- The remaining entries would fail the same way. They stay in the queue.
     local function stop(kind, message)
         result.failed = result.failed + left
         result.kind, result.message = kind, message
@@ -262,7 +262,7 @@ local function withRetry(log_name, feed_id, fn, ...)
 end
 
 -- Every unread article of a feed through its id list (adapters with fetchIdList
--- and fetchByIds): only the ids without stored text are loaded, so a sync without
+-- and fetchByIds): it loads only the ids without stored text, so a sync without
 -- news costs one id request per feed. Returns true, { articles (the new ones),
 -- ids (the newest ALL_PER_FEED_CAP unread ids), complete } or false, err, kind,
 -- partial (the articles loaded before the failure).
@@ -313,11 +313,11 @@ local function fetchAllUnread(adapter, feed_id, log_name)
 end
 
 -- Step 3b: unread/starred rows the server no longer has as unread/starred.
--- Feeds stored complete in step 3 are reconciled already; a feed without
--- unread articles needs no request. A failed or incomplete id list is never
--- used (it would mark too much read); network/auth errors end the step.
--- `only` (set of feed ids, a sync of the current path): only these feeds are
--- checked and the starred ids are left alone; `feeds` stays the whole tree, so
+-- Step 3 already reconciled the feeds it stored complete. A feed without
+-- unread articles needs no request. The step never uses a failed or incomplete id list
+-- (it would mark too much read). Network/auth errors end the step.
+-- `only` (set of feed ids, a sync of the current path): the step checks only these
+-- feeds and does not touch the starred ids. `feeds` stays the whole tree, so
 -- the other feeds do not count as removed.
 local function reconcile(deps, key, adapter, feeds, complete, summary, only)
     if not (adapter.supports("ids") and adapter.fetchUnreadIds) then
@@ -378,15 +378,15 @@ end
 -- successful request in between starts the count again.
 Sync.NET_DOWN_AFTER = 3
 
---- State of the network during one run: down = skip every request; hosts =
--- host -> error class of the hosts skipped for the rest of the run; streak =
+--- State of the network during one run: down = skip every request, hosts =
+-- host -> error class of the hosts skipped for the rest of the run, streak =
 -- hosts of the current run of failures without a success in between.
 function Sync.newNetState()
     return { down = false, hosts = {}, streak = {}, streak_count = 0 }
 end
 
--- Classes (Common.netError) that mean the device has no network: the rest of
--- the run is skipped at once.
+-- Classes (Common.netError) that mean the device has no network: the breaker skips
+-- the rest of the run at once.
 local NETWORK_GONE = { dns = true, unreachable = true }
 
 -- Classes that skip only the failing host for the rest of the run. `streak`:
@@ -398,7 +398,7 @@ local HOST_FAILURES = {
     -- The host does not exist (NXDOMAIN): no other host is affected.
     dns_host = { streak = true, log = "unknown host" },
     -- A host that blocks clients like ours (e.g. Reddit): it answered, so the
-    -- network works; asking it again only costs time.
+    -- network works. Another request to it only costs time.
     ["http 403"] = { log = "blocked" },
     ["http 429"] = { log = "blocked" },
 }
@@ -409,8 +409,8 @@ function Sync.noteSuccess(net)
 end
 
 --- Records a failed request of `url` (message = readable error, Common.netError):
--- a resolver or route failure (dns, unreachable) means the network is gone; a
--- host failure (HOST_FAILURES) skips that host, and NET_DOWN_AFTER of them on
+-- a resolver or route failure (dns, unreachable) means the network is gone. A
+-- host failure (HOST_FAILURES) skips that host. NET_DOWN_AFTER of them on
 -- different hosts in a row mean the network is gone. A server answer (http
 -- <code>) counts as a success for the streak. Returns the error class.
 function Sync.noteFailure(net, url, message)
@@ -436,7 +436,7 @@ function Sync.noteFailure(net, url, message)
     return class
 end
 
---- Is a request to `url` skipped by the breaker?
+--- Does the breaker skip a request to `url`?
 function Sync.skipUrl(net, url)
     return net.down or net.hosts[Common.urlHost(url) or ""] ~= nil
 end
@@ -511,7 +511,7 @@ local function evictedAny(steps, key, ids)
 end
 
 -- Articles of this run plus cached ones to retry (failed images below the
--- attempt cap, card image without its downscaled copy); each once.
+-- attempt cap, card image without its downscaled copy), each once.
 local function imageWork(S, deps, key, loaded, with_retries)
     local list, seen = {}, {}
     local function add(entry)
@@ -533,9 +533,9 @@ end
 
 --- Pure: the page lookups (og:image fallback) of a batch. Candidates: no image,
 -- a link, setting on. A link with a preview image known from another article
--- (`known`: link -> image_url, Store.imageUrlsForLinks) is reused; a link asked
--- already in this batch is asked once. Others need budget left (`budget.left`
--- is used up) and a host not skipped by `skip(url)` (skipped ones use no budget).
+-- (`known`: link -> image_url, Store.imageUrlsForLinks) reuses that image. A link that
+-- this batch asks already gets one request only. Others need budget left (each lookup
+-- decreases `budget.left`) and a host that `skip(url)` does not skip (skipped hosts use no budget).
 -- Returns wanted (articles to ask, one per link), reused ({ article, url }),
 -- followers (link of a wanted article -> other articles with that link).
 function Sync.pageLookups(articles, settings, budget, skip, known)
@@ -577,7 +577,7 @@ end
 
 -- Page lookups of a batch, in parallel when the device can fork. An article
 -- without any image gets the preview image of its page (card only, the text
--- stays as it is); articles sharing a link share one lookup. Returns outcomes
+-- stays as it is). Articles with the same link share one lookup. Returns outcomes
 -- (article id -> "failed" = try again next sync | "final" = the page has no
 -- preview image), cancelled, lookups made, articles served by a known/shared link.
 local function lookupPages(deps, key, articles, settings, ctx, poll)
@@ -634,8 +634,8 @@ local function lookupPages(deps, key, articles, settings, ctx, poll)
     return outcomes, false, #wanted, linked
 end
 
--- Attempt bookkeeping (spec 9: failed images are retried, at most 3 attempts).
--- Requests skipped by the breaker and failures of a dead network count neither way.
+-- Attempt bookkeeping (spec 9: later syncs retry failed images, at most 3 attempts).
+-- Requests the breaker skipped and failures of a dead network count neither way.
 local function imageOutcome(article, lookup, ok, info)
     if lookup == "failed" or (ok and (Sync.attemptFailures(info) > 0 or info.thumb_failed)) then
         return "failed"
@@ -654,8 +654,8 @@ local function newImageStats()
         too_large = 0, lookups_s = 0, downloads_s = 0, thumbnails_s = 0 }
 end
 
--- images = downloaded; reused = on the device already (kept or copied from
--- another article); links reused = preview image taken from an article with the same link;
+-- images = downloaded. reused = on the device already (kept or copied from
+-- another article). links reused = preview image taken from an article with the same link.
 -- too large = files above the size cap (only when there are any).
 local function timingText(stats)
     local too_large = (stats.too_large or 0) > 0 and string.format(" too large %d", stats.too_large) or ""
@@ -693,7 +693,7 @@ local function loadBatch(deps, key, batch, total, settings, ctx, progress, opts)
         table.insert(articles, entry.article)
     end
     -- While requests run, the dialog says how many are open and for how long
-    -- (rssreader_parallel calls this on every poll; the UI repaints at most once a second).
+    -- (rssreader_parallel calls this on every poll. The UI repaints at most once a second).
     local started
     local function poll(kind)
         return function(done, count)
@@ -712,7 +712,7 @@ local function loadBatch(deps, key, batch, total, settings, ctx, progress, opts)
 
     started = clock()
     local jobs, proxy_error
-    -- The image proxy as long as it works in this run (decided again per article below).
+    -- The image proxy as long as it works in this run (the code below decides again per article).
     local image_opts = { proxy = Sync.imageProxy(ctx.net, deps.image_proxy) }
     for k, v in pairs(opts) do
         image_opts[k] = v
@@ -788,8 +788,8 @@ local function loadBatch(deps, key, batch, total, settings, ctx, progress, opts)
     return stop
 end
 
--- Newest first, in batches; stops when the cache limit pushes out what was just
--- loaded. ctx = { summary, budget = { left = page lookups this run }, net, stats };
+-- Newest first, in batches. Stops when the cache limit pushes out what the run just
+-- loaded. ctx = { summary, budget = { left = page lookups this run }, net, stats }.
 -- with_retries adds cached articles.
 local function loadImages(deps, key, loaded, settings, ctx, progress, with_retries)
     local opts = { thumbnails = settings.thumbnails, article_images = settings.article_images, workers = settings.workers,
@@ -878,13 +878,13 @@ local function syncAccount(deps, account, settings, summary, on_progress, images
         return nil
     end
     S.replaceFeeds(deps.db, key, tree.feeds)
-    -- Articles of unsubscribed feeds go (an empty list is more likely a server
-    -- hiccup than "no feeds at all": nothing is deleted then).
+    -- Articles of unsubscribed feeds go (an empty list is more likely a temporary server
+    -- fault than "no feeds at all": then the sync deletes nothing).
     if #tree.feeds > 0 then
         summary.removed = summary.removed + S.dropRemovedFeeds(deps.db, key, removeFile(deps))
     end
     -- settings.feed_ids: a sync of the current path (spec 2026-10-13): only these
-    -- feeds load; tree, counts and the removed feeds are handled for the account.
+    -- feeds load. The sync handles tree, counts and the removed feeds for the account.
     local only = settings.feed_ids
     local feeds = tree.feeds
     if only then
@@ -903,7 +903,7 @@ local function syncAccount(deps, account, settings, summary, on_progress, images
 
     local limit = tonumber(settings.articles_per_feed) or Sync.DEFAULT_ARTICLES_PER_FEED
     local loaded, complete = {}, {}
-    -- With id lists only what is not stored yet is loaded (spec 2026-10-13, 4).
+    -- With id lists, the sync loads only what is not stored yet (spec 2026-10-13, 4).
     local by_ids = adapter.supports("ids") and adapter.fetchIdList ~= nil and adapter.fetchByIds ~= nil
     for index, feed in ipairs(feeds) do
         if not progress("feed", index, #feeds, feed.title) then
@@ -919,7 +919,7 @@ local function syncAccount(deps, account, settings, summary, on_progress, images
         if fetched then
             stored, store_err = storeFeed(deps, key, feed, result, result.complete)
         elseif partial and #partial.articles > 0 then
-            -- The pages before the failure are kept, never as the complete list.
+            -- The sync keeps the pages before the failure, but never as the complete list.
             local partial_ok, partial_err = storeFeed(deps, key, feed, partial, false)
             if not partial_ok and isDiskFull(partial_err) then
                 return "disk_full"
@@ -933,7 +933,7 @@ local function syncAccount(deps, account, settings, summary, on_progress, images
             complete[tostring(feed.id)] = result.complete
             summary.feeds_ok = summary.feeds_ok + 1
             summary.articles = summary.articles + #(result.articles or {})
-            -- Images only for the newest `limit` (the rest load when opened).
+            -- Images only for the newest `limit` (the rest load when the user opens them).
             if by_ids then
                 collectStored(S, deps.db, key, loaded, result.ids, limit)
             else
@@ -1022,9 +1022,9 @@ function Sync.run(deps, accounts, settings, on_progress)
 end
 
 --- Mode "cache only" (spec 5): loads one card list live and stores what it shows.
--- `feed_ids` = feed ids or specials ("@all", "@today", "@starred"); only real
+-- `feed_ids` = feed ids or specials ("@all", "@today", "@starred"). Only real
 -- feeds mark missing articles read (complete list). Thumbnails/images as set.
--- on_progress(event) as in Sync.run (stages "feed", "images"); returning false cancels.
+-- on_progress(event) as in Sync.run (stages "feed", "images"). A false return cancels.
 -- Returns { articles, kind, message, cancelled } (kind/message of the first failure) or { offline = true }.
 function Sync.refreshList(deps, account, feed_ids, settings, on_progress)
     if not isOnline(deps) then
@@ -1039,7 +1039,7 @@ function Sync.refreshList(deps, account, feed_ids, settings, on_progress)
     end
     local key = accountKey(deps, account)
     local limit = tonumber(settings.articles_per_feed) or Sync.DEFAULT_ARTICLES_PER_FEED
-    -- A local feed is downloaded whole anyway: all of it is stored (spec 2026-10-13, 5).
+    -- The adapter downloads a local feed whole anyway: the sync stores all of it (spec 2026-10-13, 5).
     local whole = store(deps).isLocalAccount(key)
     local loaded = {}
     local function progress(stage, current, total, _title, detail)
@@ -1126,7 +1126,7 @@ end
 --- Loads the articles of `ids` that have no stored row (opts.force: all of them,
 -- e.g. an opened article whose text the cache limit removed), in requests of
 -- Sync.BY_IDS_PAGE, and stores them (never as a complete list).
--- on_progress(event) as in Sync.run (stage "feed"); returning false cancels.
+-- on_progress(event) as in Sync.run (stage "feed"). A false return cancels.
 -- Returns { loaded, kind, message, cancelled }.
 function Sync.loadByIds(deps, account, ids, on_progress, opts)
     local result = { loaded = 0 }

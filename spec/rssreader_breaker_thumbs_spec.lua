@@ -221,7 +221,7 @@ describe("circuit breaker (block 12)", function()
             for _, entry in ipairs(log) do
                 registered = registered + (entry:find("^register:") and 1 or 0)
             end
-            assert.equals(20, registered) -- batch 2 is not skipped
+            assert.equals(20, registered) -- the sync does not skip batch 2
             assert.equals(1, Store.getArticle(db, ACC, "1").image_attempts) -- 3 syncs end the retries
             local total
             for _, line in ipairs(require("logger").lines) do
@@ -275,7 +275,7 @@ describe("thumbnail stage of an unchanged second sync (block 12)", function()
     end
 
     -- Production wiring (Sync.deviceDeps) with the real Images module on a temp
-    -- folder; only downloads and the thumbnail maker are fakes.
+    -- folder. Only downloads and the thumbnail maker are fakes.
     local function deps()
         local store = counting(Store)
         local image_deps = {

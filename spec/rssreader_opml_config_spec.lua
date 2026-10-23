@@ -1,5 +1,5 @@
--- The configuration file is rewritten after an OPML import: settings that the
--- rewrite does not know would be lost silently.
+-- An OPML import rewrites the configuration file: settings that the rewrite
+-- does not know would disappear silently.
 local OPML = require("rssreader_opml")
 
 local function roundTrip(config)

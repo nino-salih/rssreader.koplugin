@@ -3,24 +3,24 @@ Offline images (spec 2026-10-08, sections 3.1, 5 and 6): card thumbnail and
 article images, one folder per article under
 <data dir>/rssreader_offline/images/<md5(account, article id)>/.
 
-Files are named "img<hash of the URL>.<ext>", so the stored article HTML keeps
-its original URLs and the reader maps them to local files at display time
-(localizeHtml): evicted images simply fall back to "no image". Downloads go
+File names are "img<hash of the URL>.<ext>", so the stored article HTML keeps
+its original URLs. The reader maps them to local files at display time
+(localizeHtml): an evicted image simply shows as "no image". Downloads go
 through rssreader_html_resources (forked workers, image_download_workers).
-An image another article already has (same source URL, images.url) is copied
-into the folder instead of downloaded; each article keeps its own files.
+An image another article already has (same source URL, images.url) goes into the
+folder as a copy, not as a download. Each article keeps its own files.
 
 Side effects come in through `deps`:
   db, store         rssreader_db handle and rssreader_store
   fs                { list(dir) -> names|nil, mkdir, size(path), is_dir, remove, rmdir, probe(dir) -> ok,
-                      copy(src, dst) -> true when done (optional; without it everything is downloaded) }
+                      copy(src, dst) -> true when done (optional. Without it, everything is a download) }
   download          function(tasks, dir|nil, { workers, on_poll, max_bytes, proxy }) -> finished (task -> file name),
                     cancelled, errors (task -> readable error, "too large: 6.5 MB" above max_bytes),
-                    proxy_error (the image proxy failed, the files came directly);
-                    dir nil = tasks of several folders; task.width = resize width through the proxy
-  make_thumb        optional function(src, dst, max_width) -> dst when the JPEG card
-                    copy was written, nil on failure (the original stays the card image)
-  image_size        optional function(path) -> width, height | nil (header only, no decoding;
+                    proxy_error (the image proxy failed, the files came directly).
+                    dir nil = tasks of several folders. task.width = resize width through the proxy
+  make_thumb        optional function(src, dst, max_width) -> dst when it wrote the JPEG card
+                    copy, nil on failure (the original stays the card image)
+  image_size        optional function(path) -> width, height | nil (header only, no decoding,
                     no card copy above MAX_THUMB_PIXELS)
 
 Portions adapted from quickrss.koplugin (MIT, (c) 2026 qewer33): URL hash
@@ -32,21 +32,21 @@ local Common = require("rssreader_adapters/common")
 local Images = {}
 
 Images.DIR = "rssreader_offline/images"
--- At most this many images per article (thumbnail included); galleries would
--- otherwise dominate sync time and cache.
+-- At most this many images per article (thumbnail included). Without this limit,
+-- galleries would dominate sync time and cache.
 Images.MAX_PER_ARTICLE = 30
 -- Card thumbnail: a downscaled copy, so a page of cards never decodes full-size
--- photos. Wide enough for the "large" card style; the reader uses the original.
+-- photos. Wide enough for the "large" card style. The reader uses the original.
 Images.THUMB_NAME = "thumb.jpg"
 Images.THUMB_MAX_WIDTH = 480
 -- Size cap of one downloaded image (article image or card source). Larger
 -- files (6.5 MB PNG screenshots) take too long on the Kindle's Wi-Fi and to
--- decode; their download stops as soon as Content-Length or the received bytes
--- pass the cap, and they are not tried again (outcome "final").
+-- decode. Their download stops as soon as Content-Length or the received bytes
+-- pass the cap, and later syncs do not try them again (outcome "final").
 Images.MAX_IMAGE_BYTES = 3 * 1024 * 1024
 -- No card copy above this many pixels: decoding needs about 4 bytes per pixel
--- (48 MB at 12 MP) plus MuPDF's own copy, which is what KOReader can spare on a
--- 512 MB Kindle, and decoding plus scaling a 12 MP image already takes seconds
+-- (48 MB at 12 MP) plus MuPDF's own copy. That is what KOReader can spare on a
+-- 512 MB Kindle. Decoding plus scaling a 12 MP image already takes seconds
 -- there. Typical camera photos (12 MP) still get a card image. The original
 -- stays for the reader (it is below MAX_IMAGE_BYTES).
 Images.MAX_THUMB_PIXELS = 12000000
@@ -69,7 +69,7 @@ function Images.urlHash(url)
     return hash
 end
 
---- File name stem of an image URL; "img<digits>" is what rssreader_html_resources expects.
+--- File name stem of an image URL. rssreader_html_resources expects "img<digits>".
 function Images.imageId(url)
     return string.format("img%d", Images.urlHash(url))
 end
@@ -102,7 +102,7 @@ local function fileIndex(names)
 end
 
 -- Is `path` our downscaled card copy? Other card images (originals from older
--- syncs or from a failed copy) are planned again, so the copy is made later.
+-- syncs or from a failed copy) go into the plan again, so the copy comes later.
 local function isCardCopy(path)
     return type(path) == "string" and path:sub(-#Images.THUMB_NAME - 1) == "/" .. Images.THUMB_NAME
 end
@@ -112,8 +112,8 @@ local function isIcon(url)
     return url:lower():find("emoji", 1, true) ~= nil
 end
 
---- Pure: can KOReader decode the image of this URL or file name? Judged by the
--- extension; no or an unknown extension = yes (the download may still tell).
+--- Pure: can KOReader decode the image of this URL or file name? The extension
+-- decides. No or an unknown extension = yes (the download can still tell).
 function Images.isDecodable(name)
     local ext = ((tostring(name or ""):match("^[^?#]*") or ""):match("%.(%w+)$") or ""):lower()
     return not UNDECODABLE[ext]
@@ -132,7 +132,7 @@ local function u32be(s, pos) return u16be(s, pos) * 65536 + u16be(s, pos + 2) en
 local function u32le(s, pos) return u16le(s, pos) + u16le(s, pos + 2) * 65536 end
 
 -- JPEG: walks the segments up to the frame header (SOF0..SOF15 without DHT,
--- JPG and DAC); a large EXIF block before it is skipped by its length.
+-- JPG and DAC). It skips a large EXIF block before the frame header by its length.
 local function jpegSize(s)
     local pos = 3
     while pos + 8 <= #s do
@@ -188,7 +188,7 @@ function Images.imageSize(head)
     return nil
 end
 
---- Pure: why no card copy can be made of the image file `name` with this pixel
+--- Pure: why no card copy is possible for the image file `name` with this pixel
 -- size (nil = unknown, then the decoder decides): "cannot decode avif",
 -- "too many pixels: 42.2 MP", or nil when it can.
 function Images.cardProblem(name, width, height)
@@ -257,9 +257,9 @@ function Images.localFile(files, url)
     return url and fileIndex(files)[Images.imageId(url)] or nil
 end
 
--- Registers an image file (with its source URL); the thumbnail gets a
--- downscaled JPEG copy, unless `card` (a card copy taken over from another
--- article) is given. Without a copy the original is the card image (it may
+-- Registers an image file (with its source URL). The thumbnail gets a
+-- downscaled JPEG copy, except with `card` (a card copy taken over from another
+-- article). Without a copy the original is the card image (it can
 -- still display). Returns false when the copy failed (the sync counts a failed attempt).
 local function register(deps, account, article, path, item, card)
     local fs = deps.fs
@@ -347,12 +347,12 @@ function Images.planJob(planned, dir, names, stored, skip)
     return job
 end
 
---- Pure: the download job of one article (see planJob); opts.skip = breaker.
+--- Pure: the download job of one article (see planJob). opts.skip = breaker.
 function Images.articleJob(article, opts, dir, names, stored)
     return Images.planJob(Images.plan(article, opts), dir, names, stored, opts.skip)
 end
 
--- Copies one stored file (and its card copy) into the job's folder; true when done.
+-- Copies one stored file (and its card copy) into the job's folder. Returns true when done.
 local function copyInto(deps, job, item, from, to, thumb_from, thumb_to)
     if not (deps.fs.copy and deps.fs.copy(from, to)) then
         return false
@@ -365,7 +365,7 @@ local function copyInto(deps, job, item, from, to, thumb_from, thumb_to)
     return true
 end
 
--- Runs the planned copies; a failed copy (source file gone) becomes a download.
+-- Runs the planned copies. A failed copy (source file gone) becomes a download.
 local function runCopies(deps, job)
     for _, copy in ipairs(job.copies) do
         if copyInto(deps, job, copy.item, copy.from, copy.to, copy.thumb_from, copy.thumb_to) then
@@ -463,7 +463,7 @@ local function finishWaits(deps, account, article, job)
     return failed
 end
 
--- Why no card copy can be made of the file `name` (Images.cardProblem, with the
+-- Why no card copy is possible for the file `name` (Images.cardProblem, with the
 -- pixel size from deps.image_size when there is one), or nil.
 local function cardProblemOf(deps, path, name)
     local width, height
@@ -473,8 +473,8 @@ local function cardProblemOf(deps, path, name)
     return Images.cardProblem(name, width, height)
 end
 
--- The planned card image cannot be used (too large, undecodable, too many
--- pixels): the first other image of the article on disk that can be becomes the
+-- The planned card image is not usable (too large, undecodable, too many
+-- pixels): the first other usable image of the article on disk becomes the
 -- card image (`names`: item -> file name). Returns true (card made), false
 -- (card copy failed) or nil (none: the card shows the placeholder).
 local function substituteCard(deps, account, article, job, names)
@@ -488,7 +488,7 @@ local function substituteCard(deps, account, article, job, names)
     return nil
 end
 
--- Registers the files of a prepared job; see fetchForArticle for the result.
+-- Registers the files of a prepared job. See fetchForArticle for the result.
 local function finishJob(deps, account, article, job)
     local finished, errors = job.finished or {}, job.errors or {}
     local wait_failed = finishWaits(deps, account, article, job)
@@ -501,12 +501,12 @@ local function finishJob(deps, account, article, job)
         local path = name and job.dir .. "/" .. name
         names[item] = name
         -- On disk and in the store from an earlier sync: nothing to write. A card
-        -- image without its copy (planned again as thumbnail) is still made.
+        -- image without its copy (planned again as thumbnail) still gets the copy now.
         local known = name and not task and not job.copied[item] and (job.registered or {})[path]
         local problem = name and item.is_thumb and not job.card_of[item] and cardProblemOf(deps, path, name)
         if problem then
             -- No card copy of it (KOReader cannot decode it, or it is too big to
-            -- scale on the device); the reader keeps the file.
+            -- scale on the device). The reader keeps the file.
             if not known then
                 deps.store.addImage(deps.db, account, article.id, path, deps.fs.size(path) or 0, false, item.url)
                 info.registered = info.registered + 1
@@ -557,12 +557,12 @@ end
 
 --- Loads the planned images of one article and registers them in the store:
 -- files already in its folder stay, files another article has (same source
--- URL, any account) are copied, the rest is downloaded.
+-- URL, any account) become copies, and the function downloads the rest.
 -- opts: root, thumbnails, article_images, workers, skip(url) -> true leaves an image out,
--- proxy (HtmlResources.proxyConfig: downloads through the image proxy; the source
+-- proxy (HtmlResources.proxyConfig: downloads through the image proxy. The source
 -- URL stays the identity: file name, images.url, reuse).
--- `job` (from downloadBatch): the files are downloaded already, only register them.
--- Files already in the folder and in the store are not written again.
+-- `job` (from downloadBatch): the files are on the device already, only register them.
+-- The function does not write files again that are already in the folder and in the store.
 -- Returns true, { downloaded, reused (on the device already: kept or copied), copied,
 -- registered (files written to the store, 0 = nothing changed), failed, skipped,
 -- failures = { { url, error } }, too_large (files above MAX_IMAGE_BYTES: neither
@@ -570,7 +570,7 @@ end
 -- image possible: undecodable, too large or too many pixels and no other image
 -- of the article usable), proxy_error (the image proxy failed: the files came
 -- directly) } or false, "disk_full" when the device cannot write.
--- The card image falls back to another image of the article (see substituteCard).
+-- When necessary, another image of the article becomes the card image (see substituteCard).
 function Images.fetchForArticle(deps, account, article, opts, job)
     if not job then
         job = prepareJob(deps, account, article, opts)
@@ -584,10 +584,10 @@ function Images.fetchForArticle(deps, account, article, opts, job)
 end
 
 --- Downloads the missing images of several articles with ONE download call
--- (one pool of workers), each file into its article's folder. Files on the
--- device are reused (see fetchForArticle); a URL several articles of the batch
--- need is downloaded once and copied for the others when they are registered.
--- Registering (thumbnails, store) is left to fetchForArticle(..., jobs[article id]),
+-- (one pool of workers), each file into its article's folder. It reuses files on the
+-- device (see fetchForArticle). A URL that several articles of the batch need gets
+-- one download. The other articles get a copy when fetchForArticle registers them.
+-- fetchForArticle(..., jobs[article id]) does the registration (thumbnails, store),
 -- in the order of `articles`. opts as fetchForArticle plus on_poll(done, total) -> false cancels.
 -- Returns jobs (article id -> job), cancelled, number of downloads, proxy_error
 -- (the image proxy failed: the files came directly).
@@ -662,7 +662,7 @@ function Images.pageImage(html, page_url)
 end
 
 --- Pure: points <img> tags whose image was downloaded to the local file.
--- `files` = names in the article folder `dir`; other images stay untouched.
+-- `files` = names in the article folder `dir`. Other images stay as they are.
 function Images.localizeHtml(html, base, dir, files)
     if type(html) ~= "string" then
         return html
@@ -752,7 +752,7 @@ function Images.copyFile(src, dst)
     return true
 end
 
--- Hard link via libc (no extra library); fails on FAT32/vfat (the Kindle's
+-- Hard link via libc (no extra library). It fails on FAT32/vfat (the Kindle's
 -- user store), then the caller copies.
 local function hardLink(src, dst)
     local ok, linked = pcall(function()
@@ -795,8 +795,8 @@ function Images.deviceFs()
     function fs.rmdir(path)
         return lfs.rmdir(path)
     end
-    --- Puts a file of another article into `dst` (folder created): hard link
-    -- where the file system allows it, else a copy. true when done.
+    --- Puts a file of another article into `dst` (creates the folder): hard link
+    -- where the file system allows it, else a copy. Returns true when done.
     function fs.copy(src, dst)
         if lfs.attributes(src, "mode") ~= "file" then
             return false
@@ -845,7 +845,7 @@ function Images.deviceMakeThumb(src, dst, max_width)
             return nil
         end
         local w, h = bb:getWidth(), bb:getHeight()
-        -- Small images are copied too: cards always decode a small JPEG (also for
+        -- Small images get a copy too: cards always decode a small JPEG (also for
         -- WebP/PNG/GIF sources) and thumb.jpg marks a finished card image.
         local scaled = bb
         if w > max_width then
@@ -871,8 +871,8 @@ function Images.deviceMakeThumb(src, dst, max_width)
 end
 
 local PAGE_HEAD_BYTES = 64 * 1024
--- Short timeouts: a page lookup is a bonus; a stalled host must not hold up the
--- sync (batches run them in parallel, so this bounds a batch, too).
+-- Short timeouts: a page lookup is a bonus, and a stalled host must not delay the
+-- sync (batches run them in parallel, so this limits a batch, too).
 local PAGE_BLOCK_TIMEOUT = 5
 local PAGE_TOTAL_TIMEOUT = 8
 
@@ -897,7 +897,7 @@ function Images.deviceFetchPageImage(page_url)
         PAGE_BLOCK_TIMEOUT, PAGE_TOTAL_TIMEOUT)
     local html = table.concat(chunks):sub(1, PAGE_HEAD_BYTES)
     if not code and raw == "enough" then
-        -- Stopped by the sink after the head: that is all we need.
+        -- The sink stopped the transfer after the head: that is all we need.
         return true, Images.pageImage(html, page_url)
     end
     if not code then

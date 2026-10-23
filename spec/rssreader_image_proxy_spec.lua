@@ -1,5 +1,5 @@
 -- Block 14: images through the user's imgproxy (resize + JPEG on the server).
--- The source URL stays the identity of an image; only the download goes
+-- The source URL stays the identity of an image. Only the download goes
 -- through the proxy, with HTTP Basic Auth for the proxy host only.
 local helpers = require("spec_helpers")
 
@@ -115,7 +115,7 @@ describe("proxy url of an image (block 14)", function()
         assert.equals("https://img.example.org/unsafe/w:1072/q:70/plain/"
             .. "https%3A%2F%2Fcdn.example%2Fa%20b%40x%2F%C3%A4.jpg@jpg",
             HtmlResources.proxyUrl(proxy(), "https://cdn.example/a b@x/\195\164.jpg"))
-        -- an already encoded source keeps its meaning (the % is encoded once more, imgproxy decodes once)
+        -- an already encoded source keeps its meaning (the code encodes the % again, imgproxy decodes once)
         assert.equals("https://img.example.org/unsafe/w:1072/q:70/plain/https%3A%2F%2Fcdn.example%2Fa%2520b.jpg@jpg",
             HtmlResources.proxyUrl(proxy(), "https://cdn.example/a%20b.jpg"))
         assert.equals("-_.~", HtmlResources.proxyUrl(proxy(), "-_.~"):match("plain/(.*)@jpg$"))
@@ -221,7 +221,7 @@ describe("downloads through the proxy (block 14)", function()
             table.insert(urls, call.url)
             auth = auth + (call.headers.Authorization and 1 or 0)
         end
-        -- one proxy request; after it, everything direct (also the next task)
+        -- one proxy request. After it, everything goes direct (also the next task).
         assert.same({ "https://img.example.org/unsafe/w:1072/q:70/plain/https%3A%2F%2Fcdn.example%2Fa.png@jpg",
             "https://cdn.example/a.png", "https://cdn.example/bb" }, urls)
         assert.equals(1, auth)

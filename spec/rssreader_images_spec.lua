@@ -78,7 +78,7 @@ describe("rssreader_images", function()
         assert.same({ { url = "https://cdn.example/b.png", is_thumb = true } },
             Images.plan(a, { thumbnails = true, article_images = false }))
         assert.same({}, Images.plan(article("2", { thumb_path = "/x/" .. Images.THUMB_NAME }), { thumbnails = true }))
-        -- a card image that is not our downscaled copy (older sync, failed copy) is planned again
+        -- the plan adds a card image again when it is not our downscaled copy (older sync, failed copy)
         assert.same({ { url = "https://cdn.example/b.png", is_thumb = true } },
             Images.plan(article("3", { thumb_path = "/x/img1.webp" }), { thumbnails = true }))
     end)
@@ -200,7 +200,7 @@ describe("rssreader_images", function()
         assert.matches("^img%d+%.png$", original)
         assert.is_true(Store.imagePaths(db)[dir .. "/" .. original])
         assert.is_true(Store.imagePaths(db)[stored.thumb_path])
-        -- the thumbnail file is not taken for an article image
+        -- the code does not use the thumbnail file for an article image
         assert.is_nil(Images.localFile({ Images.THUMB_NAME }, "https://cdn.example/b.png"))
     end)
 

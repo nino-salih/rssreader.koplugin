@@ -35,7 +35,7 @@ local function templateIds()
 end
 
 -- Texts of _("...") calls with one double-quoted literal without escaped quotes
--- (nearly all of them; l10n/update.py also reads concatenations and long strings).
+-- (nearly all of them). l10n/update.py also reads concatenations and long strings.
 local function sourceTexts()
     local texts = {}
     local list = io.popen("ls *.lua sanitizers/*.lua rssreader_adapters/*.lua")

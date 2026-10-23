@@ -237,7 +237,7 @@ describe("ui model: list query", function()
         assert.same({ account = "k", feed_id = "x" }, Model.syncScope({ kind = "list", account = "k", feed_id = "x" }))
         assert.same({ account = "k", folder_id = "f" },
             Model.syncScope({ kind = "list", account = "k", folder_id = "f" }))
-        -- "All unread", "Today", "Starred" span the whole account; across accounts: everything.
+        -- "All unread", "Today", "Starred" span the whole account. Across accounts: everything.
         assert.same({ account = "k" }, Model.syncScope({ kind = "list", account = "k", special = "all" }))
         assert.is_nil(Model.syncScope({ kind = "list", special = "all" }))
         assert.is_false(Model.normalizeSettings({}).sync_everything)

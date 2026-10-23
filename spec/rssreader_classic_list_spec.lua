@@ -2,7 +2,7 @@
 -- through the helpers in rssreader_menu_utils.lua and the shared DB accessor.
 local helpers = require("spec_helpers")
 
--- rssreader_menu_utils pulls in many KOReader UI modules; for these helpers any
+-- rssreader_menu_utils loads many KOReader UI modules. For these helpers, any
 -- table that tolerates indexing and calls is enough.
 local function magic()
     return setmetatable({}, {
@@ -85,7 +85,7 @@ describe("classic view on the offline store", function()
         assert.equals(0, utils.listCount())
         assert.is_true(Store.getArticle(db, "freshrss:Home", "fav").is_starred)
         assert.same({}, Store.pendingActions(db, "freshrss:Home"))
-        -- removing a List story forgets it (as before the rework), it can be added again
+        -- removing a List story forgets it (as before the rework). The user can add it again.
         utils.listAdd({ title = "Again", guid = "again" })
         utils.listRemove(utils.listStories()[1])
         assert.is_nil(Store.getArticle(db, Store.LIST_ACCOUNT, "again"))

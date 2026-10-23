@@ -51,7 +51,7 @@ describe("epub offline: missing images", function()
 
     it("plans card and text images whatever the reader settings say (the EPUB wants them all)", function()
         local missing = EpubOffline.missingImages(article(), {}, {})
-        -- card image first, then the text images; emoji icons never count
+        -- card image first, then the text images. Emoji icons never count.
         assert.same({ BANNER, "https://x.org/banner-640x427.jpg", IN_TEXT, GONE }, urls(missing))
         assert.is_true(missing[1].is_thumb)
     end)
@@ -143,7 +143,7 @@ describe("epub offline: messages", function()
 end)
 
 describe("epub offline: save flow", function()
-    -- Folder contents per call of list(); the download adds files.
+    -- Folder contents per call of list(). The download adds files.
     local function stubDeps(state)
         local calls = { fetch = {}, progress = {}, create = {}, reload = 0 }
         local deps = {

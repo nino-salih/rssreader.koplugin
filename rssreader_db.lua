@@ -11,7 +11,7 @@ A db handle is a plain table `{ conn, path, stmts, depth }`:
   * `depth` - nesting level of `DB.transaction`
 
 Schema versions use `PRAGMA user_version`. `DB.MIGRATIONS` is an ordered list of
-steps; step N brings the schema from version N-1 to N. A later schema change is
+steps. Step N brings the schema from version N-1 to N. A later schema change is
 one appended function.
 ]]
 
@@ -142,7 +142,7 @@ UPDATE feeds SET server_unread = MAX(0, server_unread + ?) WHERE account = ? AND
     feed_set_sort = "UPDATE feeds SET sort_desc = ? WHERE account = ? AND id = ?",
     feed_set_unread = "UPDATE feeds SET server_unread = ? WHERE account = ? AND id = ?",
 
-    -- cache limit (spec section 6); starred articles are never candidates
+    -- cache limit (spec section 6). Starred articles are never candidates.
     evict_expired_read = [[
 SELECT account, id FROM articles WHERE is_read = 1 AND is_starred = 0
   AND COALESCE(last_access, fetched_at) < ? AND ]] .. NO_PENDING_SQL .. [[
@@ -211,7 +211,7 @@ CREATE TABLE meta (account TEXT NOT NULL, key TEXT NOT NULL, value TEXT, PRIMARY
 end
 
 -- Step 2: keep the image URL (retry of failed image downloads, "cache only" mode)
--- and the feed title (starred articles outlive their feed; classic "List" shows it).
+-- and the feed title (starred articles outlive their feed, and the classic "List" shows it).
 local function step2(conn)
     conn:exec([[
 ALTER TABLE articles ADD COLUMN image_url TEXT;
@@ -225,8 +225,8 @@ local function step3(conn)
 end
 
 -- Step 4: source URL per image file, so a sync copies a file another article
--- already has instead of downloading it; articles are looked up by link to
--- reuse a known og:image. Old rows keep url NULL (simply not reused).
+-- already has instead of downloading it. A lookup by link finds an article to
+-- reuse its known og:image. Old rows keep url NULL (the sync does not reuse them).
 local function step4(conn)
     conn:exec([[
 ALTER TABLE images ADD COLUMN url TEXT;
@@ -236,14 +236,14 @@ CREATE INDEX articles_link ON articles(link);
 end
 
 -- Step 5: reading position per article (quick reader): share of the article
--- before the page last shown, 0 .. 1; NULL = start at the top.
+-- before the page last shown, 0 .. 1. NULL = start at the top.
 local function step5(conn)
     conn:exec("ALTER TABLE articles ADD COLUMN read_position REAL;")
 end
 
 DB.MIGRATIONS = { step1, step2, step3, step4, step5 }
 
--- lua-ljsqlite3 returns INTEGER columns as int64 cdata; callers want numbers.
+-- lua-ljsqlite3 returns INTEGER columns as int64 cdata. Callers want numbers.
 local function toLua(value)
     if type(value) == "cdata" then
         return tonumber(value)
@@ -308,7 +308,7 @@ function DB.exec(db, name, ...)
     stmt:reset()
 end
 
---- Runs a named query; returns a list of rows keyed by column name (and index).
+--- Runs a named query. Returns a list of rows keyed by column name (and index).
 function DB.rows(db, name, ...)
     local stmt = bindAll(statement(db, name), ...)
     local rows = collectRows(stmt)
@@ -381,7 +381,7 @@ function DB.version(db)
     return toLua(db.conn:rowexec("PRAGMA user_version")) or 0
 end
 
---- Runs `fn()` inside BEGIN/COMMIT; rolls back when it raises or when COMMIT
+--- Runs `fn()` inside BEGIN/COMMIT. Rolls back when `fn` raises an error or when COMMIT
 -- fails (SQLITE_FULL, I/O error). Nested calls join the outer transaction.
 -- Returns true, result or false, err.
 function DB.transaction(db, fn)
@@ -463,7 +463,7 @@ local function countLostQueue(path)
     return counted and toLua(value) or nil
 end
 
--- Only these errors mean "the file is damaged"; others (no access, read-only,
+-- Only these errors mean "the file is damaged". Other errors (no access, read-only,
 -- missing folder, transient I/O) must not move a healthy database aside.
 local function isDamage(message)
     local text = tostring(message):lower()
@@ -497,7 +497,7 @@ end
 --- Opens (and creates/migrates) the database at `path`.
 -- opts.migrations replaces DB.MIGRATIONS (tests).
 -- Returns db, info with info = { created, recovered, broken_path, lost_queue },
--- or nil, err when even a fresh file cannot be created or a migration fails.
+-- or nil, err when it cannot even create a fresh file or a migration fails.
 function DB.open(path, opts)
     local steps = (opts and opts.migrations) or DB.MIGRATIONS
     local db, created_or_err, broken = openConnection(path, steps)

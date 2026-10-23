@@ -1,6 +1,6 @@
--- Block 10: images already on the device are reused instead of downloaded
--- (same article: skip; another article with the same URL: copy), og:image
--- page lookups are reused by link.
+-- Block 10: the image code reuses images already on the device instead of a new
+-- download (same article: skip, another article with the same URL: copy). It also
+-- reuses og:image page lookups by link.
 local helpers = require("spec_helpers")
 
 -- Other spec files may have replaced these modules with stubs.
@@ -293,7 +293,7 @@ describe("image reuse: batches (block 10)", function()
         local infos = load(d, ACC, { "1" })
         assert.equals(2, #calls)
         assert.equals(0, infos["1"].downloaded)
-        assert.equals(2, infos["1"].reused) -- card copy exists: the thumbnail item is not planned again
+        assert.equals(2, infos["1"].reused) -- card copy exists: no new thumbnail item in the plan
         assert.equals(0, infos["1"].copied)
     end)
 

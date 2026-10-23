@@ -39,7 +39,7 @@ local function onOff(value)
     return value and _("on") or _("off")
 end
 
---- Choice list; `choices` = { { label, value } }; on_pick(value).
+--- Choice list. `choices` = { { label, value } }, on_pick(value).
 local function choose(title, choices, current, on_pick)
     local dialog
     local buttons = {}
@@ -62,7 +62,7 @@ function SettingsUI.readerModeRow(settings)
     return _("Open articles in") .. ": " .. READER_MODE_LABELS[settings.reader_mode]
 end
 
---- Choice of the reader mode (Model.READER_MODES); on_pick(mode).
+--- Choice of the reader mode (Model.READER_MODES), on_pick(mode).
 function SettingsUI.chooseReaderMode(settings, on_pick)
     local choices = {}
     for _, mode in ipairs(Model.READER_MODES) do
@@ -102,14 +102,14 @@ function SettingsUI.showStyle(settings, on_change)
     end)
 end
 
---- The settings list; every change is saved at once and reported via on_change(settings).
+--- The settings list. It saves every change at once and reports it through on_change(settings).
 -- `context` (optional): { image_proxy = true when rssreader_configuration.lua sets one } for
 -- the read-only "Image proxy" row.
 function SettingsUI.show(settings, on_change, context)
     context = context or {}
     local dialog
-    -- The list shows itself again after a change; the dialog that made the change
-    -- (choice list, spinner) is closed by then (Chrome.replaceDialog).
+    -- The list shows itself again after a change. The dialog that made the change
+    -- (choice list, spinner) is already closed then (Chrome.replaceDialog).
     local function set(key, value)
         settings[key] = value
         SettingsUI.save(settings)

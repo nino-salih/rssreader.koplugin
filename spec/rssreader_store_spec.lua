@@ -585,7 +585,7 @@ describe("rssreader_store (fix round)", function()
         assert.is_true(Store.getArticle(db, ACC, "s1").is_starred)
         assert.is_true(Store.getArticle(db, ACC, "s2").is_starred) -- pending queue entry: local wins
         assert.is_false(Store.getArticle(db, "freshrss:Other", "o1").is_read)
-        assert.equals(3, result.read) -- u2, u3, s1; s2 has pending entries
+        assert.equals(3, result.read) -- u2, u3, s1 (s2 has pending entries)
         assert.equals(0, result.unstarred)
         -- a nil set skips that half
         Store.upsertArticles(db, ACC, "f1", { article("s3", { is_starred = true }) }, NOW)

@@ -147,8 +147,8 @@ end
 local marked_article = nil
 local marked_story_key = nil
 -- Optional ways back of the opener (the card reader's KOReader reader mode):
--- { back = function(plugin), on_end = function(plugin) }. Without them the
--- classic list is reopened and the classic end dialog shown.
+-- { back = function(plugin), on_end = function(plugin) }. Without them the module
+-- reopens the classic list and shows the classic end dialog.
 local marked_handlers = nil
 
 local function normalizePath(path)

@@ -1,7 +1,7 @@
 --[[--
 FreshRSS adapter (spec 2026-10-08, section 3.2): wraps rssreader_freshrss.lua
-(Google Reader API) and returns normalised records. The client handles login,
-token refresh and URL building; this module only maps requests and responses.
+(Google Reader API) and returns normalized records. The client handles login,
+token refresh and URL building. This module only maps requests and responses.
 ]]
 
 local Common = require("rssreader_adapters/common")
@@ -24,7 +24,7 @@ local MARK_METHODS = {
     star = "markStoryAsStarred",
     unstar = "markStoryAsUnstarred",
 }
--- Tag added / removed by an action, for edit-tag with many ids (applyActions).
+-- Tag that an action adds or removes, for edit-tag with many ids (applyActions).
 local MARK_TAGS = {
     read = { add = READ_TAG },
     unread = { remove = READ_TAG },
@@ -156,7 +156,7 @@ local function streamFor(feed_id, now)
         local start = Common.startOfDay(now)
         -- FreshRSS treats "ot" as the start time (seconds) and "nt" as the end,
         -- the reverse of the Google Reader docs (checked against a real server).
-        -- The publish date is filtered here as well.
+        -- This code also filters the publish date.
         return READING_LIST, { xt = READ_TAG, ot = string.format("%d", start) }, start
     elseif feed_id == Common.SPECIAL.starred then
         return STARRED_TAG, {}
@@ -164,7 +164,7 @@ local function streamFor(feed_id, now)
     return feed_id, { xt = READ_TAG }
 end
 
--- Token of the next page; FreshRSS sends "" or nothing at the end.
+-- Token of the next page. FreshRSS sends "" or nothing at the end.
 local function nextToken(data)
     local token = type(data) == "table" and data.continuation or nil
     if token == nil or token == "" then
@@ -205,7 +205,7 @@ function Adapter.new(client, account, env)
         return true, Adapter.flattenTree(root)
     end
 
-    --- `continuation` = token of the previous page; the result carries the token
+    --- `continuation` = token of the previous page. The result carries the token
     -- of the next page, nil at the end of the stream.
     function adapter.fetchUnread(feed_id, limit, continuation)
         local stream, query, since = streamFor(feed_id, now())
@@ -219,14 +219,14 @@ function Adapter.new(client, account, env)
         return true, { articles = normalizeItems(data, since), continuation = nextToken(data) }
     end
 
-    --- Starred articles (read or not), so "Gemerkt" also shows read favourites.
+    --- Starred articles (read or not), so "Starred" also shows read favorites.
     function adapter.fetchStarred(limit)
         return adapter.fetchUnread(Common.SPECIAL.starred, limit)
     end
 
     -- Every item id (long form) of a feed or special id in server order (newest
     -- first), paged with "continuation". `with_read`: without the "xt" filter.
-    -- More than `cap` ids: false (an incomplete list must not be used).
+    -- More than `cap` ids: false (never use an incomplete list).
     local function fetchIds(feed_id, cap, with_read)
         local stream, query = streamFor(feed_id, now())
         query.s, query.n, query.output = stream, IDS_PAGE, "json"

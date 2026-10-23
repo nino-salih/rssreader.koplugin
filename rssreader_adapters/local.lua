@@ -1,8 +1,8 @@
 --[[--
 Local feeds adapter (spec 2026-10-08, sections 3.2 and 5): feeds and groups
-from rssreader_local_store (incl. OPML imports), downloaded and parsed by
-rssreader_feed_fetcher. There is no server: read state lives in the store,
-actions are confirmed immediately and the tree has no counts of its own.
+from rssreader_local_store (incl. OPML imports). rssreader_feed_fetcher downloads
+and parses them. There is no server: read state lives in the store, the adapter
+confirms actions immediately and the tree has no counts of its own.
 
 Ids match the classic view: feed id = feed.url or feed.id or feed.title,
 article id = story key (rssreader_adapters/common storyKey).
@@ -126,7 +126,7 @@ function Adapter.new(client, account)
     end
 
     --- Stories of the feed newest first, `limit` from position `continuation`
-    -- (default 1, all without a limit); the token of the next page is the
+    -- (default 1, all without a limit). The token of the next page is the
     -- position after it. `all_ids` lists every story still in the feed (the
     -- sync forgets rows of stories that left it).
     function adapter.fetchUnread(feed_id, limit, continuation)

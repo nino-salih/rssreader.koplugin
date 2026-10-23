@@ -1,7 +1,7 @@
 -- Checks against the user's real imgproxy (block 14). Proxy address and login
--- come ONLY from RSSREADER_TEST_IMGPROXY_URL / _USER / _PASSWORD; the spec is
--- skipped when they are missing. Nothing but codes, sizes and widths is
--- printed: no address, no login, no proxy URL.
+-- come ONLY from RSSREADER_TEST_IMGPROXY_URL / _USER / _PASSWORD. Without them,
+-- the spec does not run. It prints nothing but codes, sizes and widths: no
+-- address, no login, no proxy URL.
 
 local Curl = require("curl_http")
 local helpers = require("spec_helpers")
@@ -19,7 +19,7 @@ local USERNAME = env("RSSREADER_TEST_IMGPROXY_USER")
 local PASSWORD = env("RSSREADER_TEST_IMGPROXY_PASSWORD")
 
 -- A public 2000x1335 PNG of 3.5 MB (Unsplash CDN, above the 3 MB cap when loaded
--- directly); its query string checks the encoding of the source URL.
+-- directly). Its query string checks the encoding of the source URL.
 local SOURCE = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=2000&fm=png"
 
 describe("imgproxy integration (block 14)", function()

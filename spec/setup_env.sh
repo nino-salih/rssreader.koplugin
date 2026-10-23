@@ -8,7 +8,7 @@ set -euo pipefail
 DEV="${RSSREADER_DEV:-$HOME/rssreader-dev}"
 LUAJIT_REF="${LUAJIT_REF:-v2.1}"
 LUAROCKS_VERSION="${LUAROCKS_VERSION:-3.11.1}"
-# lua-ljsqlite3 lives in koreader-base; this commit is the base submodule of KOReader v2026.07.1.
+# lua-ljsqlite3 lives in koreader-base. This commit is the base submodule of KOReader v2026.07.1.
 KOBASE_SHA="${KOBASE_SHA:-6e4bc81af4e04f78d81677a323a780a71b29702a}"
 
 mkdir -p "$DEV/src"
@@ -28,7 +28,7 @@ fi
 if [ ! -x "$DEV/lua51/bin/lua" ]; then
     rm -rf lua-5.1.5
     curl -fsSL https://www.lua.org/ftp/lua-5.1.5.tar.gz | tar xz
-    # No readline: plain POSIX build with dlopen so C rocks can be loaded.
+    # No readline: plain POSIX build with dlopen so that Lua can load C rocks.
     make -C lua-5.1.5/src all MYCFLAGS="-DLUA_USE_POSIX -DLUA_USE_DLOPEN" MYLIBS="-Wl,-E -ldl"
     make -C lua-5.1.5 install INSTALL_TOP="$DEV/lua51"
 fi

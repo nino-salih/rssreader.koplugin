@@ -123,13 +123,13 @@ return {
         sanitized_save_path = nil, -- path to save sanitized links, if nil uses default_folder_on_save, then home folder
     },
     -- Optional image proxy for the offline card reader (imgproxy, https://imgproxy.net).
-    -- When set, every image of a sync is fetched as
+    -- When set, a sync fetches every image as
     --   <url>/unsafe/w:<width>/q:70/plain/<percent-encoded image URL>@jpg
-    -- so your server resizes it (screen width; card images 480 px) and sends a JPEG:
+    -- so your server resizes it (screen width, card images 480 px) and sends a JPEG:
     -- far smaller downloads, and AVIF/HEIC/WebP images work on the device.
-    -- The images keep their original URLs; article pages are still fetched directly.
+    -- The images keep their original URLs. The plugin still fetches article pages directly.
     -- Protect the proxy with a login (HTTP Basic Auth, e.g. in Traefik or nginx): it fetches any URL.
-    -- The login is only sent to this url. If the proxy fails during a sync, the rest of
+    -- The plugin sends the login only to this url. If the proxy fails during a sync, the rest of
     -- that sync downloads directly. Remove the block (or set it to nil) to turn it off.
     image_proxy = nil, -- example:
     -- image_proxy = {

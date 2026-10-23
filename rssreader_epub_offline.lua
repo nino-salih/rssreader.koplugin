@@ -2,18 +2,18 @@
 "Save as EPUB" of a card article from the offline store (spec 2026-10-08,
 section 8.3, hold menu). One code path:
 
-1. Missing images of the article (planned like a sync, files not in its
-   folder) are loaded first through the sync's own download of one article
-   (Images.fetchForArticle: reuse, image proxy, size cap) and registered in the
-   store as a sync does. Offline this step is left out.
-2. The EPUB is built from the stored text and the local files only: the reader
+1. The sync's own download of one article first loads the missing images of
+   the article (planned like a sync, files not in its folder) and registers them in
+   the store as a sync does (Images.fetchForArticle: reuse, image proxy, size cap).
+   Offline, this step does not run.
+2. The module builds the EPUB from the stored text and the local files only: the reader
    page (rssreader_ui_article, banner first, duplicate banner and title
-   stripped) with absolute file paths as image sources; every <img> left is a
-   local file, so createEpub never goes to the network. Images that are not on
-   the device are left out.
+   stripped) with absolute file paths as image sources. Every <img> left is a
+   local file, so createEpub never goes to the network. The EPUB leaves out images
+   that are not on the device.
 
-The planner functions are pure; side effects come in through `deps`
-(EpubOffline.save) and are wired for the device in EpubOffline.deviceDeps.
+The planner functions are pure. Side effects come in through `deps`
+(EpubOffline.save). EpubOffline.deviceDeps connects them for the device.
 ]]
 
 local Article = require("rssreader_ui_article")
@@ -36,9 +36,9 @@ end
 
 --- Pure: images of the article (planned like a sync, Images.plan) that are not
 -- in its folder (`names`, the folder listing). opts.proxy as for the sync
--- (with the proxy an AVIF card image is planned as it is). opts.plan =
+-- (with the proxy, the plan keeps an AVIF card image as it is). opts.plan =
 -- { thumbnails, article_images } plans with these instead of the whole article
--- (the reader settings when an article is opened).
+-- (the reader settings when the user opens an article).
 function EpubOffline.missingImages(article, names, opts)
     local missing = {}
     local plan = opts and opts.plan or PLAN
@@ -66,7 +66,7 @@ local function bannerPath(article, dir, names)
 end
 
 --- Pure: every <img> of `html` reduced to <img src="file"> when its src is a
--- file below `dir`, else removed; returns the html and the asset map src -> file
+-- file below `dir`, else removed. Returns the html and the asset map src -> file
 -- (createEpub's local_assets: it reads these files and never downloads). Only
 -- the src attribute counts (createEpub would take a "data-src" before it).
 function EpubOffline.localImages(html, dir)
@@ -140,7 +140,7 @@ function EpubOffline.save(deps, article)
         workers = deps.image_opts.workers, proxy = deps.image_opts.proxy }
     if #EpubOffline.missingImages(article, deps.list(dir), opts) > 0 and deps.online() then
         deps.progress(_("Loading images…"))
-        -- A failure leaves the images out; the EPUB is built with what is there.
+        -- A failure leaves the images out. The EPUB uses what is there.
         deps.fetch_images(article, opts)
         article = deps.reload(article)
     end

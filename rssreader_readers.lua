@@ -5,16 +5,16 @@ articles in"). A mode is one entry of Readers.MODES:
   mode -> { open = function(ctx, articles, index, on_close) }
 
 The card list calls Readers.open(settings.reader_mode, ...) and knows nothing
-about the modes; a third mode is one more entry. Before an article is shown
-(opened, or reached by Next/Previous) ctx.prepare(record, done), when the
-context has it, loads what is missing (spec 2026-10-13, section 6) and calls
-done() when the article can be shown. on_close(index[, plugin]) is
-called when the reader goes back to the cards (index = the article read last;
-plugin = the current plugin instance when the FileManager was rebuilt).
+about the modes. A third mode is one more entry. Before the reader shows an
+article (opened, or reached by Next/Previous), ctx.prepare(record, done) loads
+what is missing (spec 2026-10-13, section 6), when the context has it. It calls
+done() when the article is ready to show. The reader calls on_close(index[, plugin])
+when it goes back to the cards (index = the article read last, plugin = the
+current plugin instance after a rebuild of the FileManager).
 
   quick     rssreader_ui_reader (MuPDF in a plugin widget, end bar)
   koreader  the article page (rssreader_ui_article, crengine CSS) written to a
-            file (rssreader_pages) and opened in KOReader's ReaderUI; the way
+            file (rssreader_pages) and opened in KOReader's ReaderUI. The way
             back reuses rssreader_reader_return (corner button, Back key, end
             of document) with this module's handlers: the end dialog
             (Chrome.EndDialog with Model.endActions) and "Back".
@@ -47,7 +47,7 @@ end
 -- The article shown in ReaderUI and where it came from: { ctx, articles, index,
 -- on_close, article }. Module state on purpose (explicit cache): it has to
 -- survive the FileManager -> ReaderUI swap, which replaces the plugin instances
--- (package.loaded outlives both). Replaced by every open, cleared on the way back.
+-- (package.loaded outlives both). Every open replaces it, the way back clears it.
 local session = nil
 
 local function readerReturn()
@@ -76,7 +76,7 @@ end
 
 local openKoreader, showEndDialog
 
--- "Back": close ReaderUI (KOReader shows the file browser), then the
+-- "Back": close ReaderUI (KOReader shows the file browser), then show the
 -- card page of the article on top. Deferred: the Back key hook runs inside
 -- ReaderUI's own event handler.
 local function backToCards(plugin)
@@ -102,7 +102,7 @@ local function setStatus(action)
     record.is_read, record.is_starred = current.article.is_read, current.article.is_starred
 end
 
--- End action id -> handler(plugin); navigation goes through Model.endTarget.
+-- End action id -> handler(plugin). Navigation goes through Model.endTarget.
 local END_HANDLERS = {
     star = function(plugin)
         setStatus(session.article.is_starred and "unstar" or "star")
@@ -167,7 +167,7 @@ openKoreader = function(ctx, articles, index, on_close)
     if ctx.hideCards then
         ctx.hideCards()
     end
-    -- Same path as the classic view; an open ReaderUI is replaced (ShowingReader).
+    -- Same path as the classic view. The new ReaderUI replaces an open one (ShowingReader).
     require("apps/filemanager/filemanager"):openFile(path)
 end
 
@@ -182,7 +182,7 @@ Readers.MODES = {
     koreader = { open = openKoreader },
 }
 
---- Opens articles[index] in the reader `mode` (Model.READER_MODES; unknown = quick).
+--- Opens articles[index] in the reader `mode` (Model.READER_MODES, unknown = quick).
 function Readers.open(mode, ctx, articles, index, on_close)
     local entry = Readers.MODES[mode] or Readers.MODES[Model.SETTINGS_DEFAULTS.reader_mode]
     Readers.prepared(ctx, articles[index], function()

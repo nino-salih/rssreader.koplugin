@@ -27,7 +27,7 @@ describe("rssreader_live_list", function()
 
     it("shows the rows of the covered ids, then one placeholder per id not loaded yet", function()
         local ordered = { "c", "b", "a", "z" }
-        -- Rows come sorted by publish date from the store; "b" is filtered out (e.g. read).
+        -- Rows come sorted by publish date from the store. The filter removes "b" (e.g. read).
         local rows = { { id = "a" }, { id = "c" }, { id = "x" } }
         local list = LiveList.build(rows, ordered, 3, "k")
         assert.equals("a,c,?z", ids(list))

@@ -1,7 +1,7 @@
 local Parallel = require("rssreader_parallel")
 
--- Fake of KOReader's ffi/util fork API: a "child" runs at once in this process;
--- its pipe is a string. `opts.fail_fork` = number of forks that fail;
+-- Fake of KOReader's ffi/util fork API: a "child" runs at once in this process.
+-- Its pipe is a string. `opts.fail_fork` = number of forks that fail.
 -- `opts.running` = pids that stay running until terminated.
 local function fakeFork(opts)
     opts = opts or {}

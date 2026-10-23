@@ -1,7 +1,7 @@
 -- luasocket-compatible request() over the curl binary, for the FreshRSS
 -- integration spec (the test environment has no luasocket/luasec).
 -- URL, headers and body go to curl through a config on stdin, never on the
--- command line; response files are private temp files removed right away.
+-- command line. Response files are private temp files that the code removes at once.
 
 local Curl = {}
 

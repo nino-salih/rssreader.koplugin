@@ -518,7 +518,7 @@ function FreshRSS:markStory(story, add_tag, remove_tag)
     return true
 end
 
--- One edit-tag request for many stories: the i= parameter may repeat (the
+-- One edit-tag request for many stories: the i= parameter can repeat (the
 -- offline sync sends up to 100 ids per call, as upstream's Offline Mode does).
 function FreshRSS:markStories(story_ids, add_tag, remove_tag, is_retry)
     if type(story_ids) ~= "table" or #story_ids == 0 then

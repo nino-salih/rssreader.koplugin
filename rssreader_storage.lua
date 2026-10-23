@@ -1,8 +1,8 @@
 --[[--
 The one place where the plugin gets its offline DB handle.
 
-`Storage.get()` opens `<KOReader data dir>/rssreader_offline.sqlite3` on first use,
-runs the legacy JSON migration (rssreader_migration.lua) until it has succeeded
+`Storage.get()` opens `<KOReader data dir>/rssreader_offline.sqlite3` on first use.
+It runs the legacy JSON migration (rssreader_migration.lua) until it has succeeded
 once, and caches the handle for the rest of the session. All plugin code (classic
 menus, story viewer, sanitizer quota, the new offline UI) uses this accessor and
 passes the handle to `rssreader_store` functions.
@@ -25,7 +25,7 @@ function Storage.path()
 end
 
 -- Feed identifiers of all configured local feeds, as the classic menus build them
--- (feed.url or feed.id or feed.title); needed to match the md5 names of read logs.
+-- (feed.url or feed.id or feed.title). The migration needs them to match the md5 names of read logs.
 local function localFeeds()
     local feeds = {}
     local ok, local_store = pcall(function()
@@ -84,8 +84,8 @@ function Storage.get()
     return db
 end
 
---- Returns (once) the info about a damaged DB that was replaced:
--- { broken_path, lost_queue } - lost_queue may be nil when it could not be counted.
+--- Returns (once) the info about a damaged DB that Storage replaced:
+-- { broken_path, lost_queue }. lost_queue can be nil when the count failed.
 function Storage.takeNotice()
     local notice = cache.notice
     cache.notice = nil
