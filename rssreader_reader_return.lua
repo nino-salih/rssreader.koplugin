@@ -32,7 +32,7 @@ local Size = require("ui/size")
 local TextWidget = require("ui/widget/textwidget")
 local UIManager = require("ui/uimanager")
 local logger = require("logger")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 
 local Screen = Device.screen
 
@@ -146,6 +146,10 @@ end
 -- the saved navigation state stops being worth restoring.
 local marked_article = nil
 local marked_story_key = nil
+-- Optional ways back of the opener (the card reader's KOReader reader mode):
+-- { back = function(plugin), on_end = function(plugin) }. Without them the module
+-- reopens the classic list and shows the classic end dialog.
+local marked_handlers = nil
 
 local function normalizePath(path)
     if type(path) ~= "string" or path == "" then
@@ -156,14 +160,18 @@ end
 
 -- story_key: the story's utils.storyUniqueKey, so "Next" at the end of the
 -- article can find its place in the list again.
-function ReaderReturn.markArticle(path, story_key)
+-- handlers (optional): { back(plugin), on_end(plugin) } replace "reopen the
+-- classic list" and the classic end-of-article dialog.
+function ReaderReturn.markArticle(path, story_key, handlers)
     marked_article = normalizePath(path)
     marked_story_key = story_key
+    marked_handlers = handlers
 end
 
 function ReaderReturn.forgetArticle()
     marked_article = nil
     marked_story_key = nil
+    marked_handlers = nil
 end
 
 function ReaderReturn.getArticleStoryKey()
@@ -267,6 +275,9 @@ end
 --------------------------------------------------------------------
 
 function ReaderReturn.returnToList(plugin)
+    if marked_handlers and marked_handlers.back then
+        return (try("going back to the cards", marked_handlers.back, plugin))
+    end
     if not plugin or type(plugin.openAccountList) ~= "function" then
         return false
     end
@@ -432,6 +443,10 @@ function ReaderReturn.refreshTouchZone(plugin)
 end
 
 function ReaderReturn.showEndOfArticleDialog(plugin)
+    if marked_handlers and marked_handlers.on_end then
+        marked_handlers.on_end(plugin)
+        return
+    end
     -- Needs to know which story this is; articles opened before this existed,
     -- or from the List, do not.
     local can_go_next = marked_story_key ~= nil and type(plugin.openAdjacentArticle) == "function"

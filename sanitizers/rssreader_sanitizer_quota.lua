@@ -1,23 +1,28 @@
 -- Monthly request counter for sanitizers that are billed per call.
 --
--- RapidAPI's free BASIC plan is a *soft* limit: once the included requests are
--- used up the calls are not blocked, they are billed (currently $0.05 each),
--- and the only warning is a notice at 85% and 100% of the quota. Since the
--- sanitizer chain fires on every story that gets opened, the brake has to live
+-- RapidAPI's free BASIC plan is a *soft* limit: after the included requests are
+-- consumed, RapidAPI does not block the calls but bills them (currently $0.05 each).
+-- The only warning is a notice at 85% and 100% of the quota. The sanitizer
+-- chain runs on every story that the user opens, so the brake must be
 -- on this side.
 --
--- The counter is deliberately conservative: it is incremented before the
--- request goes out, so a failed call still costs a slot rather than risking an
--- undercount against real billing.
+-- The counter is conservative on purpose: it increments before the
+-- request goes out. Thus a failed call still costs a slot, and the count is
+-- never lower than the real billing.
+--
+-- The state lives in the offline DB (meta, account '', key 'sanitizer_quota')
+-- as JSON { period = "YYYY-MM", counts = { [id] = n }, warned = { [id] = true } }.
+-- rssreader_migration.lua moves the old data/rssreader_sanitizer_quota.json there
+-- once. The *In functions take the db and the period so that tests can call
+-- them. The public functions use the shared DB and the clock.
 
 local json = require("common/json")
-local util = require("util")
-local DataStorage = require("datastorage")
 local logger = require("logger")
+local Store = require("rssreader_store")
 
 local Quota = {}
 
-local QUOTA_FILE = DataStorage:getDataDir() .. "/data/rssreader_sanitizer_quota.json"
+local META_KEY = "sanitizer_quota"
 
 -- Local time, not UTC: the point is to match the month the user sees, and a
 -- day of drift against the provider's own reset is harmless for a brake.
@@ -25,134 +30,96 @@ local function currentPeriod()
     return os.date("%Y-%m")
 end
 
-local function ensureDataDir()
-    local dir = DataStorage:getDataDir() .. "/data"
-    util.makePath(dir)
-    return dir
+local decodeJson = require("rssreader_adapters/common").decodeJson
+
+local function validId(id)
+    return type(id) == "string" and id ~= ""
 end
 
-local function decodeJson(content)
-    if type(content) ~= "string" or content == "" then
-        return nil
+-- Missing, unreadable or from a previous month: the period starts over.
+local function loadState(db, period)
+    local decoded = decodeJson(Store.getMeta(db, "", META_KEY))
+    if decoded and decoded.period == period and type(decoded.counts) == "table" then
+        decoded.warned = type(decoded.warned) == "table" and decoded.warned or {}
+        return decoded
     end
-    local decoder
-    local decode_value = json.decode
-    if type(decode_value) == "function" then
-        decoder = decode_value
-    elseif type(decode_value) == "table" and type(decode_value.decode) == "function" then
-        decoder = decode_value.decode
-    else
-        return nil
-    end
-    local ok, data = pcall(decoder, content)
-    if not ok or type(data) ~= "table" then
-        return nil
-    end
-    return data
+    return { period = period, counts = {}, warned = {} }
 end
 
-local function encodeJson(data)
-    local ok, encoded = pcall(function() return json.encode(data) end)
-    if not ok or type(encoded) ~= "string" then
-        return nil
+local function saveState(db, state)
+    local ok, encoded = pcall(json.encode, state)
+    if ok and type(encoded) == "string" then
+        Store.setMeta(db, "", META_KEY, encoded)
     end
-    return encoded
 end
 
-local state -- cached across calls; the file is tiny but this runs per story
-
-local function freshState()
-    return { period = currentPeriod(), counts = {}, warned = {} }
-end
-
-local function loadState()
-    if state then
-        -- A reader session can outlive a month boundary.
-        if state.period ~= currentPeriod() then
-            state = freshState()
-        end
-        return state
-    end
-
-    local file = io.open(QUOTA_FILE, "r")
-    if file then
-        local content = file:read("*all")
-        file:close()
-        local decoded = decodeJson(content)
-        if decoded and decoded.period == currentPeriod() and type(decoded.counts) == "table" then
-            decoded.warned = type(decoded.warned) == "table" and decoded.warned or {}
-            state = decoded
-            return state
-        end
-    end
-
-    -- Missing, unreadable or from a previous month: start the period over.
-    state = freshState()
-    return state
-end
-
-local function saveState()
-    if not state then
-        return false
-    end
-    local encoded = encodeJson(state)
-    if not encoded then
-        return false
-    end
-    ensureDataDir()
-    local file = io.open(QUOTA_FILE, "w")
-    if not file then
-        logger.info("RSSReader", "Unable to write sanitizer quota file")
-        return false
-    end
-    file:write(encoded)
-    file:close()
-    return true
-end
-
--- Requests already made in the current month for this sanitizer id.
-function Quota.used(id)
-    if type(id) ~= "string" or id == "" then
+function Quota.usedIn(db, id, period)
+    if not validId(id) then
         return 0
     end
-    local current = loadState()
-    return tonumber(current.counts[id]) or 0
+    return tonumber(loadState(db, period).counts[id]) or 0
 end
 
--- Books a request against `limit`. Returns true when the caller may proceed
--- (and the request has been counted), false when the quota is spent.
+-- Books a request against `limit`. Returns true when the caller can continue
+-- (the counter then includes the request), false when the quota is spent.
 -- A limit of nil, 0 or a negative number means "no ceiling".
-function Quota.consume(id, limit)
-    if type(id) ~= "string" or id == "" then
+function Quota.consumeIn(db, id, limit, period)
+    if not validId(id) then
         return true
     end
-
+    local state = loadState(db, period)
+    local used = tonumber(state.counts[id]) or 0
     local ceiling = tonumber(limit)
-    local current = loadState()
-    local used = tonumber(current.counts[id]) or 0
-
     if ceiling and ceiling > 0 and used >= ceiling then
         return false
     end
-
-    current.counts[id] = used + 1
-    saveState()
+    state.counts[id] = used + 1
+    saveState(db, state)
     return true
 end
 
 -- True the first time a quota runs out in a given month, so the caller can
 -- tell the user once instead of on every story they open afterwards.
-function Quota.shouldWarn(id)
-    if type(id) ~= "string" or id == "" then
+function Quota.shouldWarnIn(db, id, period)
+    if not validId(id) then
         return false
     end
-    local current = loadState()
-    if current.warned[id] then
+    local state = loadState(db, period)
+    if state.warned[id] then
         return false
     end
-    current.warned[id] = true
-    saveState()
+    state.warned[id] = true
+    saveState(db, state)
     return true
+end
+
+local function sharedDb()
+    local db = require("rssreader_storage").get()
+    if not db then
+        logger.warn("RSSReader", "Sanitizer quota: offline DB unavailable")
+    end
+    return db
+end
+
+-- Requests already made in the current month for this sanitizer id.
+function Quota.used(id)
+    local db = sharedDb()
+    return db and Quota.usedIn(db, id, currentPeriod()) or 0
+end
+
+-- Without the DB the brake cannot count. The function allows the request (as
+-- before, when the quota file write failed).
+function Quota.consume(id, limit)
+    local db = sharedDb()
+    if not db then
+        return true
+    end
+    return Quota.consumeIn(db, id, limit, currentPeriod())
+end
+
+function Quota.shouldWarn(id)
+    local db = sharedDb()
+    return db and Quota.shouldWarnIn(db, id, currentPeriod()) or false
 end
 
 return Quota

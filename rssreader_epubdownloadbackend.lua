@@ -12,7 +12,7 @@ local socket = require("socket")
 local socket_url = require("socket.url")
 local socketutil = require("socketutil")
 local time = require("ui/time")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 local T = ffiutil.template
 
 local EpubDownloadBackend = {

@@ -2,7 +2,7 @@ local util = require("util")
 local Device = require("device")
 local UIManager = require("ui/uimanager")
 local InfoMessage = require("ui/widget/infomessage")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 local logger = require("logger")
 local lfs = require("libs/libkoreader-lfs")
 local qrencode = require("ffi/qrencode")
@@ -18,8 +18,10 @@ local FiveFiltersSanitizer = require("sanitizers/rssreader_sanitizer_fivefilters
 local DiffbotSanitizer = require("sanitizers/rssreader_sanitizer_diffbot")
 local InstaparserSanitizer = require("sanitizers/rssreader_sanitizer_instaparser")
 local SanitizerQuota = require("sanitizers/rssreader_sanitizer_quota")
+local Store = require("rssreader_store")
+local Storage = require("rssreader_storage")
+local AdapterCommon = require("rssreader_adapters/common")
 local Trapper = require("ui/trapper")
-local sha2 = require("ffi/sha2")
 local ffiUtil = require("ffi/util")
 local T = ffiUtil.template
 
@@ -579,52 +581,8 @@ function utils.resolveStoryFeedId(context, story)
     return nil
 end
 
-function utils.storyUniqueKey(story)
-    if type(story) ~= "table" then
-        return nil
-    end
-    local key = story.story_hash
-        or story.hash
-        or story.guid
-        or story.story_id
-        or story.id
-        or story.permalink
-        or story.href
-        or story.link
-        or story.url
-    if not key then
-        local pieces = {}
-        local title = story.story_title or story.title or story.permalink or story.href or story.link
-        if title and title ~= "" then
-            table.insert(pieces, title)
-        end
-        local suffix = story.date
-            or story.timestamp
-            or story.created_on_time
-            or story.updated
-            or story.published
-            or story.pubDate
-            or story.modified
-            or story.dc_date
-            or story.last_modified
-            or story.insertedDate
-            or story.created
-            or story.guid
-            or ""
-        table.insert(pieces, tostring(suffix))
-        local content_fragment = story.story_content or story.content or story.summary or story.description
-        if type(content_fragment) == "string" and content_fragment ~= "" then
-            table.insert(pieces, content_fragment:sub(1, 512))
-        end
-        if #pieces > 0 then
-            key = string.format("local:%s", sha2.md5(table.concat(pieces, "::")))
-        end
-    end
-    if key == nil then
-        return nil
-    end
-    return tostring(key)
-end
+-- Shared with the card view: local feed articles use the same key as article id.
+utils.storyUniqueKey = AdapterCommon.storyKey
 
 function utils.appendUniqueStory(storage, key_map, story)
     if type(storage) ~= "table" or type(key_map) ~= "table" or type(story) ~= "table" then
@@ -1322,6 +1280,8 @@ function utils.fetchStoryContent(story, builder, on_complete, options)
                                 return yieldToUI(delay_s)
                             end or nil,
                             workers = utils.getImageDownloadWorkers(builder),
+                            -- Same image proxy as the sync (nil = direct).
+                            proxy = HtmlResources.deviceProxy(builder and builder.accounts),
                         })
                         if rewritten then
                             raw_html = rewritten
@@ -1871,6 +1831,118 @@ function utils.determineSanitizedSaveDirectory(builder)
     end
     
     return utils.determineSaveDirectory(builder)
+end
+
+-- Offline DB access for the classic view ------------------------------------
+-- The shared handle comes from rssreader_storage.lua. The first caller after
+-- the replacement of a damaged DB tells the user about it.
+function utils.offlineDb()
+    local db = Storage.get()
+    local notice = db and Storage.takeNotice()
+    if notice then
+        local text = _("The offline database was damaged and has been recreated.")
+        if notice.lost_queue and notice.lost_queue > 0 then
+            text = text .. "\n" .. string.format(_("%d unsent change(s) were lost."), notice.lost_queue)
+        end
+        UIManager:show(InfoMessage:new{ text = text })
+    end
+    return db
+end
+
+-- Reading list ("List"): purely local, as before the rework. Saved stories are
+-- starred rows of Store.LIST_ACCOUNT only. Server favorites never show here,
+-- and this list never unstars them. Stories that utils.listStories returns carry
+-- _store_account/_store_id and _pool_read.
+function utils.listAdd(story)
+    local key = utils.storyUniqueKey(story)
+    local db = utils.offlineDb()
+    if not key or not db then
+        return false, "unavailable"
+    end
+    return Store.saveStory(db, Store.LIST_ACCOUNT, Store.articleFromStory(story, key), os.time())
+end
+
+function utils.listStories()
+    local db = utils.offlineDb()
+    local stories = {}
+    for _, article in ipairs(db and Store.listStarred(db, Store.LIST_ACCOUNT) or {}) do
+        local story = Store.storyFromArticle(article)
+        story._pool_read = article.is_read
+        table.insert(stories, story)
+    end
+    return stories
+end
+
+function utils.listCount()
+    local db = utils.offlineDb()
+    return db and Store.countStarred(db, Store.LIST_ACCOUNT) or 0
+end
+
+local function setListStatus(story, action)
+    local db = utils.offlineDb()
+    if db and type(story) == "table" and story._store_id then
+        Store.setStatus(db, story._store_account, story._store_id, action, os.time())
+    end
+end
+
+function utils.listSetRead(story, is_read)
+    setListStatus(story, is_read and "read" or "unread")
+end
+
+function utils.listRemove(story)
+    local db = utils.offlineDb()
+    if db and type(story) == "table" and story._store_id and story._store_account == Store.LIST_ACCOUNT then
+        Store.deleteArticle(db, Store.LIST_ACCOUNT, story._store_id, os.remove)
+    end
+end
+
+function utils.listClear()
+    for _, story in ipairs(utils.listStories()) do
+        utils.listRemove(story)
+    end
+end
+
+-- Read state of local feeds: kept in the store under account "local:<name>",
+-- one row per story key and feed (the menus use the key set as "read map").
+local function localAccount(account_name)
+    return Store.accountKey("local", account_name or "local")
+end
+
+function utils.localReadIds(account_name, feed_identifier)
+    local db = utils.offlineDb()
+    return db and Store.readIds(db, localAccount(account_name), feed_identifier) or {}
+end
+
+function utils.setLocalRead(account_name, feed_identifier, keys, is_read)
+    local db = utils.offlineDb()
+    if db then
+        Store.markLocalRead(db, localAccount(account_name), feed_identifier, keys, is_read, os.time())
+    end
+end
+
+function utils.saveLocalReadMap(account_name, feed_identifier, read_map)
+    local keys = {}
+    for key, value in pairs(read_map or {}) do
+        if value then
+            table.insert(keys, key)
+        end
+    end
+    utils.setLocalRead(account_name, feed_identifier, keys, true)
+end
+
+-- Forgets stories that left the feed. Returns the read map limited to valid_keys.
+function utils.pruneLocalRead(account_name, feed_identifier, read_map, valid_keys)
+    local pruned = {}
+    for _, key in ipairs(valid_keys or {}) do
+        if read_map and read_map[key] then
+            pruned[key] = true
+        end
+    end
+    local db = utils.offlineDb()
+    if db then
+        Store.pruneFeed(db, localAccount(account_name), feed_identifier, valid_keys, nil, { headers_only = true })
+    end
+    return pruned
 end
 
 return utils

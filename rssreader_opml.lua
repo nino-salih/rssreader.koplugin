@@ -484,6 +484,22 @@ function OPML.serializeConfiguration(config)
         table.insert(lines, "    },\n")
     end
 
+    -- Image proxy (offline card reader): dropping it here would switch the proxy
+    -- off after every OPML import.
+    local proxy = config.image_proxy
+    if type(proxy) == "table" and proxy.url then
+        table.insert(lines, "\n    image_proxy = {\n")
+        for _, key in ipairs({ "url", "username", "password" }) do
+            if proxy[key] then
+                table.insert(lines, string.format("        %s = %q,\n", key, tostring(proxy[key])))
+            end
+        end
+        if tonumber(proxy.width) then
+            table.insert(lines, string.format("        width = %d,\n", tonumber(proxy.width)))
+        end
+        table.insert(lines, "    },\n")
+    end
+
     table.insert(lines, "}\n")
     return table.concat(lines)
 end

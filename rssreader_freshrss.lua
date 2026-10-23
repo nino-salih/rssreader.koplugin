@@ -270,15 +270,31 @@ function FreshRSS:fetchStructure(force)
         return false, tags_data
     end
 
-    self.tree_cache = self:buildTreeFromData(subs_data, tags_data)
+    -- 3. Get unread counts per feed and per label (subscription/list has none).
+    -- Counts are optional: the tree still loads if this request fails.
+    local ok3, counts_data = self:authorizedRequest("GET", "/api/greader.php/reader/api/0/unread-count", { output = "json" })
+    if not ok3 then
+        logger.warn("FreshRSS unread-count request failed:", counts_data)
+        counts_data = nil
+    end
+
+    self.tree_cache = self:buildTreeFromData(subs_data, tags_data, counts_data)
     return true, self.tree_cache
 end
 
-function FreshRSS:buildTreeFromData(subs_data, tags_data)
+function FreshRSS:buildTreeFromData(subs_data, tags_data, counts_data)
     local feeds_map = {}
     local folders = {}
     local folders_map = {}
     local tag_labels = {}
+
+    -- Map stream id ("feed/..." or "user/-/label/...") to its unread count
+    local unread_by_id = {}
+    for _, entry in ipairs((counts_data and counts_data.unreadcounts) or {}) do
+        if type(entry) == "table" and entry.id ~= nil then
+            unread_by_id[entry.id] = tonumber(entry.count) or 0
+        end
+    end
 
     -- Collect human-friendly labels from tag list
     for _, tag in ipairs(tags_data.tags or {}) do
@@ -319,6 +335,7 @@ function FreshRSS:buildTreeFromData(subs_data, tags_data)
             id = cat_id,
             title = title,
             children = {},
+            unreadCount = unread_by_id[cat_id] or 0,
         }
         folders_map[cat_id] = folder
         table.insert(folders, folder)
@@ -336,7 +353,7 @@ function FreshRSS:buildTreeFromData(subs_data, tags_data)
                 title = feed.title,
                 url = feed.htmlUrl,
                 feed_url = (type(feed.id) == "string" and feed.id:gsub("^feed/", "")) or feed.id,
-                unreadCount = feed.unreadCount or 0,
+                unreadCount = unread_by_id[feed.id] or feed.unreadCount or 0,
             },
         }
         feeds_map[feed.id] = feed_node
@@ -424,8 +441,8 @@ function FreshRSS:fetchStories(feed_id, options)
     end
 
     if options.published_since then
-        -- 'nt' means "newer than"
-        query.nt = options.published_since 
+        -- FreshRSS reads 'ot' as the start time in whole seconds ('nt' is the end time).
+        query.ot = string.format("%d", tonumber(options.published_since) or 0)
     end
  
     if options.read_filter == "unread_only" then
@@ -495,6 +512,38 @@ function FreshRSS:markStory(story, add_tag, remove_tag)
         if tostring(err):find("Token") then
             self.token_cache = nil
             return self:markStory(story, add_tag, remove_tag)
+        end
+        return false, err
+    end
+    return true
+end
+
+-- One edit-tag request for many stories: the i= parameter can repeat (the
+-- offline sync sends up to 100 ids per call, as upstream's Offline Mode does).
+function FreshRSS:markStories(story_ids, add_tag, remove_tag, is_retry)
+    if type(story_ids) ~= "table" or #story_ids == 0 then
+        return true
+    end
+    local ok, token = self:getEditToken()
+    if not ok then return false, token end
+
+    local parts = { "client=" .. url.escape(USER_AGENT), "T=" .. url.escape(token) }
+    if add_tag then
+        table.insert(parts, "a=" .. url.escape(add_tag))
+    end
+    if remove_tag then
+        table.insert(parts, "r=" .. url.escape(remove_tag))
+    end
+    for _, story_id in ipairs(story_ids) do
+        table.insert(parts, "i=" .. url.escape(tostring(story_id)))
+    end
+
+    local request_ok, err = self:authorizedRequest("POST", "/api/greader.php/reader/api/0/edit-tag", nil, table.concat(parts, "&"))
+    if not request_ok then
+        -- A stale token: fetch a new one and send once more.
+        if not is_retry and tostring(err):find("Token") then
+            self.token_cache = nil
+            return self:markStories(story_ids, add_tag, remove_tag, true)
         end
         return false, err
     end

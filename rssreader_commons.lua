@@ -1,4 +1,4 @@
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 
 local Commons = {}
 

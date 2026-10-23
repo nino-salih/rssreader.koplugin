@@ -7,7 +7,7 @@ local Button = require("ui/widget/button")
 local Blitbuffer = require("ffi/blitbuffer")
 local HorizontalSpan = require("ui/widget/horizontalspan")
 local Device = require("device")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 local json = require("common/json")
 local util = require("util")
 local lfs = require("libs/libkoreader-lfs")
@@ -590,13 +590,24 @@ function RSSReader:addToMainMenu(menu_items)
         text = _("RSS Reader"),
         sorting_hint = "search",
         callback = function()
-            self:openAccountList()
+            self:openOfflineReader()
         end,
     }
 end
 
 function RSSReader:onRSSReader()
-    self:openAccountList()
+    self:openOfflineReader()
+end
+
+-- The card reader (tree > cards > reader). ≡ > Classic view opens openAccountList.
+function RSSReader:openOfflineReader(opts)
+    local ok, err = pcall(function()
+        require("rssreader_ui_tree").open(self, opts)
+    end)
+    if not ok then
+        logger.warn("RSSReader: offline reader failed, opening the classic view:", err)
+        self:openAccountList()
+    end
 end
 
 -- Only ever fires on the ReaderUI-side instance of the plugin; ReaderReturn
@@ -608,6 +619,19 @@ function RSSReader:onReaderReady()
     local ok, err = pcall(ReaderReturn.setup, self)
     if not ok then
         logger.warn("RSSReader: reader-return setup failed:", err)
+    end
+end
+
+-- The plugin, not the user, opens card reader pages (KOReader reader mode):
+-- remove them from KOReader's History and "last document".
+function RSSReader:onCloseDocument()
+    local file = self.ui and self.ui.document and self.ui.document.file
+    local ok, Pages = pcall(require, "rssreader_pages")
+    if ok and file and Pages.isPage(Pages.root(), file) then
+        local done, err = pcall(Pages.forgetHistory, file)
+        if not done then
+            logger.warn("RSSReader: removing the article from History failed:", err)
+        end
     end
 end
 

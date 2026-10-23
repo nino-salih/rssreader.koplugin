@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Atom Log</title>
+  <entry>
+    <title>Atom entry</title>
+    <link rel="alternate" href="https://atom.example/1"/>
+    <updated>2025-10-08T07:00:00Z</updated>
+    <author><name>Ada Atom</name><email>ada@atom.example</email></author>
+    <content type="html">&lt;p&gt;Hello &lt;img src="https://atom.example/a.png"&gt;&lt;/p&gt;</content>
+  </entry>
+</feed>

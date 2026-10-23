@@ -7,7 +7,7 @@ local HorizontalSpan = require("ui/widget/horizontalspan")
 local Device = require("device")
 local UIManager = require("ui/uimanager")
 local InfoMessage = require("ui/widget/infomessage")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 local NetworkMgr = require("ui/network/manager")
 
 local Screen = Device.screen
@@ -1307,8 +1307,12 @@ function backends.showFreshRSSNode(self, account, client, node, opts)
             local normal_callback = function()
                 backends.showFreshRSSNode(self, account, client, child)
             end
+            local folder_title = child.title or _("Untitled folder")
+            if (child.unreadCount or 0) > 0 then
+                folder_title = folder_title .. " (" .. tostring(child.unreadCount) .. ")"
+            end
             table.insert(entries, {
-                text = child.title or _("Untitled folder"),
+                text = folder_title,
                 callback = normal_callback,
                 hold_callback = function()
                     self:createLongPressMenuForFolder(account, client, child, normal_callback)
@@ -1382,7 +1386,7 @@ function backends.showFreshRSSFeed(self, account, client, feed_node, opts)
         
         -- Only apply time filter for the "Today" feed  
         if feed_node.id == "freshrss_today_unread" then  
-            fetch_options.published_since = utils.getStartOfTodayTimestamp() * 1000000  
+            fetch_options.published_since = utils.getStartOfTodayTimestamp() -- seconds
         end  
         
         if not opts.page then  

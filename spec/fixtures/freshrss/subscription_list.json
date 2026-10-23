@@ -1,0 +1,5 @@
+{"subscriptions":[
+ {"id":"feed/1","title":"Void Herald","categories":[{"id":"user/-/label/novel","label":"novel"}],"url":"https://void.example/feed","htmlUrl":"https://void.example/","iconUrl":""},
+ {"id":"feed/2","title":"Tech Daily","categories":[{"id":"user/-/label/tech","label":"tech"}],"url":"https://tech.example/rss","htmlUrl":"https://tech.example/","iconUrl":""},
+ {"id":"feed/3","title":"Loose Blog","categories":[],"url":"https://loose.example/atom","htmlUrl":"https://loose.example/","iconUrl":""}
+]}

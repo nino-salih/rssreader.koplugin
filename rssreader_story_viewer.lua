@@ -17,11 +17,11 @@ local InputContainer = require("ui/widget/container/inputcontainer")
 local logger = require("logger")
 local util = require("util")
 local lfs = require("libs/libkoreader-lfs")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 local HtmlResources = require("rssreader_html_resources")
 local urlmod = require("socket.url")
 local NetworkMgr = require("ui/network/manager")
-local Pool = require("rssreader_pool")
+local utils = require("rssreader_menu_utils")
 
 local Screen = Device.screen
 local Input = Device.input
@@ -317,9 +317,8 @@ local function buildToolbarButtons(story, on_action, close_handler, include_clos
                 text = _("Remove from List"),
                 background = Blitbuffer.COLOR_WHITE,
                 callback = function()
-                    local pool_index = options.pool_index
-                    if pool_index then
-                        Pool.removeStory(pool_index)
+                    if options.pool_index then
+                        utils.listRemove(story)
                         UIManager:show(InfoMessage:new{ text = _("Removed from List."), timeout = 1 })
                         if close_handler then
                             close_handler()
@@ -332,7 +331,7 @@ local function buildToolbarButtons(story, on_action, close_handler, include_clos
                 text = _("Add to List"),
                 background = Blitbuffer.COLOR_WHITE,
                 callback = function()
-                    local ok, err = Pool.addStory(story)
+                    local ok, err = utils.listAdd(story)
                     if ok then
                         UIManager:show(InfoMessage:new{ text = _("Added to List."), timeout = 1 })
                         -- Mark as read after adding to list (only if unread)
@@ -341,8 +340,6 @@ local function buildToolbarButtons(story, on_action, close_handler, include_clos
                         end
                     elseif err == "duplicate" then
                         UIManager:show(InfoMessage:new{ text = _("Already in List."), timeout = 1 })
-                    elseif err == "pool_full" then
-                        UIManager:show(InfoMessage:new{ text = _("List is full."), timeout = 1 })
                     else
                         UIManager:show(InfoMessage:new{ text = _("Could not add to List."), timeout = 1 })
                     end
@@ -729,7 +726,9 @@ function StoryViewer:_showStoryNow(story, on_action, on_close, options)
 
         local asset_paths = HtmlResources.prepareAssetPaths(temp_dir, string.format("preview_%d_%d", os.time(), nextTempCounter()))
         if asset_paths then
-            local rewritten, assets = HtmlResources.downloadAndRewrite(html, story_link, asset_paths)
+            local rewritten, assets = HtmlResources.downloadAndRewrite(html, story_link, asset_paths, {
+                proxy = options and options.image_proxy,
+            })
             if rewritten and rewritten ~= "" then
                 html = rewritten
             end

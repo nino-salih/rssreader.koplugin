@@ -7,7 +7,7 @@ local ffiUtil = require("ffi/util")
 local Device = require("device")
 local UIManager = require("ui/uimanager")
 local InfoMessage = require("ui/widget/infomessage")
-local _ = require("gettext")
+local _ = require("rssreader_gettext")
 local logger = require("logger")
 local lfs = require("libs/libkoreader-lfs")
 local NetworkMgr = require("ui/network/manager")
@@ -25,9 +25,6 @@ local QRMessage = require("ui/widget/qrmessage")
 
 local utils = require("rssreader_menu_utils")
 local backends = require("rssreader_menu_backends")
-local Pool = require("rssreader_pool")
-
-local LocalReadState
 
 local MenuBuilder = {}
 MenuBuilder.__index = MenuBuilder
@@ -65,7 +62,7 @@ function MenuBuilder:createTapCallback(stories, index, context)
         end
     elseif tap_action == "addtolist" then
         return function()
-            local ok, err = Pool.addStory(story)
+            local ok, err = utils.listAdd(story)
             if ok then
                 UIManager:show(InfoMessage:new{ text = _("Added to List."), timeout = 1 })
                 utils.normalizeStoryReadState(story)
@@ -79,8 +76,6 @@ function MenuBuilder:createTapCallback(stories, index, context)
                 end
             elseif err == "duplicate" then
                 UIManager:show(InfoMessage:new{ text = _("Already in List."), timeout = 1 })
-            elseif err == "pool_full" then
-                UIManager:show(InfoMessage:new{ text = _("List is full."), timeout = 1 })
             else
                 UIManager:show(InfoMessage:new{ text = _("Could not add to List."), timeout = 1 })
             end
@@ -179,6 +174,7 @@ function MenuBuilder:showStory(stories, index, on_action, on_close, options, con
         allow_mark_unread = allow_mark_unread,
         allow_star = allow_star,
         show_images_in_preview = show_images_in_preview,
+        image_proxy = show_images_in_preview and HtmlResources.deviceProxy(self.accounts) or nil,
     })
 end
 
@@ -344,7 +340,8 @@ function MenuBuilder:handleStoryAction(stories, index, action, payload, context)
                     if story_local_key then
                         story._rss_local_key = story_local_key
                         context.local_read_map = context.local_read_map or {}
-                        context.local_read_map = self.local_read_state.markRead(feed_identifier, story_local_key, context.local_read_map)
+                        context.local_read_map[story_local_key] = true
+                        utils.setLocalRead(context.account_name or (context.feed_node and context.feed_node._account_name), feed_identifier, { story_local_key }, true)
                         if context.feed_node then
                             context.feed_node._rss_local_read_map = context.local_read_map
                         end
@@ -391,7 +388,8 @@ function MenuBuilder:handleStoryAction(stories, index, action, payload, context)
                     if story_local_key then
                         story._rss_local_key = story_local_key
                         context.local_read_map = context.local_read_map or {}
-                        context.local_read_map = self.local_read_state.markUnread(feed_identifier, story_local_key, context.local_read_map)
+                        context.local_read_map[story_local_key] = nil
+                        utils.setLocalRead(context.account_name or (context.feed_node and context.feed_node._account_name), feed_identifier, { story_local_key }, false)
                         if context.feed_node then
                             context.feed_node._rss_local_read_map = context.local_read_map
                         end
@@ -749,7 +747,7 @@ function MenuBuilder:createStoryLongPressMenu(stories, index, context, open_call
             background = Blitbuffer.COLOR_WHITE,
             callback = function()
                 closeDialog()
-                local ok, err = Pool.addStory(story)
+                local ok, err = utils.listAdd(story)
                 if ok then
                     UIManager:show(InfoMessage:new{ text = _("Added to List."), timeout = 1 })
                     markStoryReadIfNeeded()
@@ -761,8 +759,6 @@ function MenuBuilder:createStoryLongPressMenu(stories, index, context, open_call
                     end
                 elseif err == "duplicate" then
                     UIManager:show(InfoMessage:new{ text = _("Already in List."), timeout = 1 })
-                elseif err == "pool_full" then
-                    UIManager:show(InfoMessage:new{ text = _("List is full."), timeout = 1 })
                 else
                     UIManager:show(InfoMessage:new{ text = _("Could not add to List."), timeout = 1 })
                 end
@@ -1011,10 +1007,7 @@ function MenuBuilder:performLocalMarkAllAsRead(feed, account_name, on_done)
             items = {}
         end
 
-        local read_map = self.local_read_state.load(feed_identifier)
-        if type(read_map) ~= "table" then
-            read_map = {}
-        end
+        local read_map = utils.localReadIds(account_name, feed_identifier)
 
         local new_marks = 0
         for _, story in ipairs(items) do
@@ -1028,7 +1021,7 @@ function MenuBuilder:performLocalMarkAllAsRead(feed, account_name, on_done)
             end
         end
 
-        self.local_read_state.save(feed_identifier, read_map)
+        utils.saveLocalReadMap(account_name, feed_identifier, read_map)
 
         local feed_node = feed._rss_feed_node
         if feed_node then
@@ -1102,10 +1095,7 @@ function MenuBuilder:performLocalGroupMarkAllAsRead(group, account_name)
             end
 
             local feed_identifier = feed.url or feed.id or feed.title or "local_feed"
-            local read_map = self.local_read_state.load(feed_identifier)
-            if type(read_map) ~= "table" then
-                read_map = {}
-            end
+            local read_map = utils.localReadIds(account_name, feed_identifier)
 
             local new_marks = 0
             for _, story in ipairs(items) do
@@ -1119,7 +1109,7 @@ function MenuBuilder:performLocalGroupMarkAllAsRead(group, account_name)
                 end
             end
 
-            self.local_read_state.save(feed_identifier, read_map)
+            utils.saveLocalReadMap(account_name, feed_identifier, read_map)
             
             local feed_node = feed._rss_feed_node
             if feed_node then
@@ -1595,10 +1585,6 @@ function MenuBuilder:new(opts)
     local options = opts or {}
     local instance = setmetatable({}, MenuBuilder)
     instance.local_store = options.local_store or LocalStore:new()
-    if not instance.local_read_state then
-        LocalReadState = LocalReadState or require("rssreader_local_readstate")
-    end
-    instance.local_read_state = LocalReadState
     instance.accounts = options.accounts
     instance.reader = options.reader
     instance.story_viewer = options.story_viewer or StoryViewer:new()
@@ -1680,12 +1666,7 @@ function MenuBuilder:showLocalFeed(feed, opts)
     local feed_identifier = feed_node.url or feed.url or feed_node.id or feed_node.title or "local_feed"
     local read_map = feed_node._rss_local_read_map
     if not read_map then
-        local loaded_map = self.local_read_state.load(feed_identifier)
-        if type(loaded_map) ~= "table" then
-            read_map = {}
-        else
-            read_map = loaded_map
-        end
+        read_map = utils.localReadIds(account_name, feed_identifier)
         feed_node._rss_local_read_map = read_map
     end
 
@@ -1711,9 +1692,8 @@ function MenuBuilder:showLocalFeed(feed, opts)
                 utils.setStoryReadState(story, false)
             end
         end
-        read_map = self.local_read_state.prune(feed_identifier, read_map, valid_keys)
+        read_map = utils.pruneLocalRead(account_name, feed_identifier, read_map, valid_keys)
         feed_node._rss_local_read_map = read_map
-        self.local_read_state.save(feed_identifier, read_map)
     end
 
     local function finalizeMenu()
@@ -1730,6 +1710,7 @@ function MenuBuilder:showLocalFeed(feed, opts)
             feed = feed,
             feed_node = feed_node,
             feed_identifier = feed_identifier,
+            account_name = account_name,
             local_read_map = read_map,
             refresh = function()
                 self:showLocalFeed(feed, {
@@ -1937,7 +1918,7 @@ function MenuBuilder:buildAccountEntries(accounts, open_callback)
             holds = holds_items,
         })
     end
-    local pool_count = Pool.count()
+    local pool_count = utils.listCount()
     local pool_label = pool_count > 0
         and string.format(_("List (%d)"), pool_count)
         or _("List")
@@ -2605,7 +2586,7 @@ end
 -- ────────────────────────────────────────────────────────────
 
 function MenuBuilder:showPoolPopup()
-    local pool_count = Pool.count()
+    local pool_count = utils.listCount()
     local dialog
     dialog = ButtonDialog:new{
         title = string.format(_("List (%d)"), pool_count),
@@ -2643,7 +2624,7 @@ function MenuBuilder:showPoolPopup()
 end
 
 function MenuBuilder:showPoolStoryList()
-    local stories = Pool.getStories()
+    local stories = utils.listStories()
     local view_mode = "compact"
     if self.reader and type(self.reader.getListViewMode) == "function" then
         view_mode = self.reader:getListViewMode()
@@ -2671,7 +2652,7 @@ function MenuBuilder:showPoolStoryList()
         elseif tap_action == "open" then
             tap_callback = function()
                 if not story._pool_read then
-                    Pool.markRead(current_index)
+                    utils.listSetRead(story, true)
                     story._pool_read = true
                     story._rss_is_read = true
                 end
@@ -2679,7 +2660,7 @@ function MenuBuilder:showPoolStoryList()
             end
         elseif tap_action == "addtolist" then
             tap_callback = function()
-                Pool.removeStory(current_index)
+                utils.listRemove(story)
                 UIManager:show(InfoMessage:new{ text = _("Removed from List."), timeout = 1 })
                 UIManager:scheduleIn(0.1, function()
                     self:refreshPoolMenu()
@@ -2736,7 +2717,7 @@ function MenuBuilder:poolShowStoryPreview(stories, index)
 
     -- Mark as read in pool
     if not story._pool_read then
-        Pool.markRead(index)
+        utils.listSetRead(story, true)
         story._pool_read = true
         story._rss_is_read = true
     end
@@ -2763,6 +2744,7 @@ function MenuBuilder:poolShowStoryPreview(stories, index)
         is_api_version = false,
         allow_mark_unread = true,
         show_images_in_preview = show_images_in_preview,
+        image_proxy = show_images_in_preview and HtmlResources.deviceProxy(self.accounts) or nil,
         is_pool = true,
         pool_index = index,
     })
@@ -2795,7 +2777,7 @@ function MenuBuilder:handlePoolStoryAction(stories, index, action, payload)
 
         -- Mark as read in pool
         if not story._pool_read then
-            Pool.markRead(index)
+            utils.listSetRead(story, true)
             story._pool_read = true
             story._rss_is_read = true
         end
@@ -2823,7 +2805,7 @@ function MenuBuilder:handlePoolStoryAction(stories, index, action, payload)
 
     if action == "mark_read" then
         if story then
-            Pool.markRead(index)
+            utils.listSetRead(story, true)
             story._pool_read = true
             story._rss_is_read = true
             utils.setStoryReadState(story, true)
@@ -2833,7 +2815,7 @@ function MenuBuilder:handlePoolStoryAction(stories, index, action, payload)
 
     if action == "mark_unread" then
         if story then
-            Pool.markUnread(index)
+            utils.listSetRead(story, false)
             story._pool_read = false
             story._rss_is_read = false
             utils.setStoryReadState(story, false)
@@ -2915,7 +2897,7 @@ function MenuBuilder:poolStoryLongPress(stories, index)
             callback = function()
                 closeDialog()
                 if not story._pool_read then
-                    Pool.markRead(index)
+                    utils.listSetRead(story, true)
                     story._pool_read = true
                     story._rss_is_read = true
                 end
@@ -2940,11 +2922,11 @@ function MenuBuilder:poolStoryLongPress(stories, index)
             callback = function()
                 closeDialog()
                 if is_read then
-                    Pool.markUnread(index)
+                    utils.listSetRead(story, false)
                     story._pool_read = false
                     story._rss_is_read = false
                 else
-                    Pool.markRead(index)
+                    utils.listSetRead(story, true)
                     story._pool_read = true
                     story._rss_is_read = true
                 end
@@ -2956,7 +2938,7 @@ function MenuBuilder:poolStoryLongPress(stories, index)
             background = Blitbuffer.COLOR_WHITE,
             callback = function()
                 closeDialog()
-                Pool.removeStory(index)
+                utils.listRemove(story)
                 UIManager:show(InfoMessage:new{ text = _("Removed from List."), timeout = 2 })
                 UIManager:scheduleIn(0.1, function()
                     self:refreshPoolMenu()
@@ -3020,7 +3002,7 @@ function MenuBuilder:poolStoryLongPress(stories, index)
 end
 
 function MenuBuilder:refreshPoolMenu()
-    local stories = Pool.getStories()
+    local stories = utils.listStories()
     if self.reader and self.reader.current_menu_info and self.reader.current_menu_info.menu then
         local menu = self.reader.current_menu_info.menu
         local view_mode = "compact"
@@ -3051,7 +3033,7 @@ function MenuBuilder:refreshPoolMenu()
             elseif tap_action == "open" then
                 tap_callback = function()
                     if not story._pool_read then
-                        Pool.markRead(current_index)
+                        utils.listSetRead(story, true)
                         story._pool_read = true
                         story._rss_is_read = true
                     end
@@ -3059,7 +3041,7 @@ function MenuBuilder:refreshPoolMenu()
                 end
             elseif tap_action == "addtolist" then
                 tap_callback = function()
-                    Pool.removeStory(current_index)
+                    utils.listRemove(story)
                     UIManager:show(InfoMessage:new{ text = _("Removed from List."), timeout = 1 })
                     UIManager:scheduleIn(0.1, function()
                         self:refreshPoolMenu()
@@ -3140,7 +3122,7 @@ function MenuBuilder:poolSaveSingleStory(story, pool_index)
                 cleanupAssets()
                 -- Remove from pool after save
                 if pool_index then
-                    Pool.removeStory(pool_index)
+                    utils.listRemove(story)
                     self:refreshPoolMenu()
                 end
                 UIManager:show(InfoMessage:new{ text = string.format(_("Saved to: %s"), epub_path), timeout = 3 })
@@ -3162,7 +3144,7 @@ function MenuBuilder:poolSaveSingleStory(story, pool_index)
         cleanupAssets()
         -- Remove from pool after save
         if pool_index then
-            Pool.removeStory(pool_index)
+            utils.listRemove(story)
             self:refreshPoolMenu()
         end
         UIManager:show(InfoMessage:new{ text = string.format(_("Saved to: %s"), target_path), timeout = 3 })
@@ -3170,7 +3152,7 @@ function MenuBuilder:poolSaveSingleStory(story, pool_index)
 end
 
 function MenuBuilder:showPoolClearConfirm()
-    local pool_count = Pool.count()
+    local pool_count = utils.listCount()
     if pool_count == 0 then
         UIManager:show(InfoMessage:new{ text = _("List is already empty."), timeout = 3 })
         return
@@ -3192,7 +3174,7 @@ function MenuBuilder:showPoolClearConfirm()
                 background = Blitbuffer.COLOR_WHITE,
                 callback = function()
                     UIManager:close(confirm_dialog)
-                    Pool.clear()
+                    utils.listClear()
                     UIManager:show(InfoMessage:new{ text = _("List cleared."), timeout = 2 })
                     
                     -- Close pool story list if open, return to main menu
@@ -3211,7 +3193,7 @@ function MenuBuilder:showPoolClearConfirm()
 end
 
 function MenuBuilder:poolSaveAll()
-    local stories = Pool.getStories()
+    local stories = utils.listStories()
     if #stories == 0 then
         UIManager:show(InfoMessage:new{ text = _("List is empty."), timeout = 3 })
         return
@@ -3262,7 +3244,7 @@ function MenuBuilder:poolSaveAll()
         end
 
         -- Re-read pool because indices shift after removal
-        local remaining = Pool.getStories()
+        local remaining = utils.listStories()
         if #remaining == 0 then
             closeProgress()
             UIManager:show(InfoMessage:new{
@@ -3299,7 +3281,7 @@ function MenuBuilder:poolSaveAll()
             if not content then
                 logger.warn("RSSReader Pool", "Failed to fetch content for", title)
                 -- Skip this story, move to next without removing
-                Pool.removeStory(1)
+                utils.listRemove(story)
                 UIManager:scheduleIn(0.1, saveNext)
                 return
             end
@@ -3350,7 +3332,7 @@ function MenuBuilder:poolSaveAll()
             cleanupAssets()
 
             if saved then
-                Pool.removeStory(1)
+                utils.listRemove(story)
             end
 
             UIManager:scheduleIn(0.1, saveNext)
