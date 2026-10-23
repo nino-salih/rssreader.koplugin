@@ -109,6 +109,23 @@ describe("rssreader_gettext", function()
         assert.is_nil(none)
     end)
 
+    it("takes KOReader's language, else its setting, else the system language", function()
+        local function env(values)
+            return function(name) return values[name] end
+        end
+        local none = env({})
+        assert.equals("fr", Translations.locale("fr", "fr", env({ LANG = "de_DE.UTF-8" })))
+        -- KOReader keeps "C" when it has no catalog for the language. The setting still names it.
+        assert.equals("de_AT", Translations.locale("C", "de_AT", none))
+        -- English set in KOReader stays English on a German Kindle.
+        assert.equals("en", Translations.locale("C", "en", env({ LANG = "de_DE.UTF-8" })))
+        -- No language in KOReader (the Kindle default): the system language of the device.
+        assert.equals("de_DE.UTF-8", Translations.locale("C", nil, env({ LANG = "de_DE.UTF-8" })))
+        assert.equals("es_ES", Translations.locale("C", "", env({ LANG = "de_DE", LC_ALL = "es_ES" })))
+        assert.equals("fr_FR", Translations.locale("C", nil, env({ LANG = "de_DE", LC_MESSAGES = "fr_FR" })))
+        assert.is_nil(Translations.locale("C", nil, none))
+    end)
+
     it("translates from its own catalog and falls back to KOReader's", function()
         Translations.setCatalog({ ["Back"] = "Zurück" })
         assert.equals("Zurück", Translations("Back"))

@@ -106,16 +106,31 @@ local function readFile(path)
     return content
 end
 
-local function currentLocale()
-    local locale = GetText.current_lang
-    if locale and locale ~= "C" then
-        return locale
+--- Pure: the locale for the catalog. KOReader's language (current_lang) comes first.
+-- KOReader keeps "C" when it has no catalog for the language, but its setting still
+-- names the language. Without a setting (the default on a Kindle), the plugin uses the
+-- system language of the device (getenv: LC_ALL, LC_MESSAGES, LANG), as SimpleUI does.
+function Translations.locale(current_lang, setting, getenv)
+    if current_lang and current_lang ~= "C" then
+        return current_lang
     end
-    -- KOReader keeps "C" when it has no catalog for the language. The setting still names it.
+    if type(setting) == "string" and setting ~= "" then
+        return setting
+    end
+    for _, name in ipairs({ "LC_ALL", "LC_MESSAGES", "LANG" }) do
+        local value = getenv(name)
+        if type(value) == "string" and value ~= "" then
+            return value
+        end
+    end
+    return nil
+end
+
+local function currentLocale()
     local ok, setting = pcall(function()
         return G_reader_settings and G_reader_settings:readSetting("language")
     end)
-    return ok and setting or locale
+    return Translations.locale(GetText.current_lang, ok and setting or nil, os.getenv)
 end
 
 --- Loads the catalog of `locale` from `dir`/l10n (the first candidate with a file).
